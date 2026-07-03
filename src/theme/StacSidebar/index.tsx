@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import Link from '@docusaurus/Link';
-import {translate} from '@docusaurus/Translate';
+import Translate, {translate} from '@docusaurus/Translate';
 import {usePluginData} from '@docusaurus/useGlobalData';
 
 import type {StacGlobalData, StacNavNode} from '../../types.js';
@@ -143,6 +143,9 @@ export default function StacSidebar({
       className="stac-tree"
       aria-label={translate({id: 'stac.tree.aria', message: 'Catalog tree'})}
     >
+      <p className="stac-tree__label" aria-hidden="true">
+        <Translate id="stac.tree.label">Catalog tree</Translate>
+      </p>
       <ul className="stac-tree__root">
         <TreeNode
           node={data.tree}
