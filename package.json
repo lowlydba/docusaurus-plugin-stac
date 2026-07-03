@@ -51,6 +51,7 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@docusaurus/utils": "^3.0.0",
     "maplibre-gl": "^4.7.1",
     "pmtiles": "^3.2.1"
   },

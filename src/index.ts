@@ -2,6 +2,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 import type {LoadContext, Plugin} from '@docusaurus/types';
+import {normalizeUrl} from '@docusaurus/utils';
 
 import {walkCatalog} from './catalog-walker.js';
 import {normalizeOptions} from './options.js';
@@ -78,7 +79,15 @@ export default function pluginStac(
         );
 
         addRoute({
-          path: node.routePath,
+          // `node.routePath` is baseUrl-relative (used as-is by `<Link>`,
+          // which prepends baseUrl itself). The router that matches routes
+          // against the actual browser pathname needs the baseUrl-inclusive
+          // path, matching the convention used by Docusaurus's own content
+          // plugins (see @docusaurus/plugin-content-pages). Omitting this
+          // causes a client-side route-matching mismatch after hydration
+          // (page renders fine from the server, then flips to "Page Not
+          // Found" once React takes over).
+          path: normalizeUrl([context.baseUrl, node.routePath]),
           component: componentForType(node.type),
           modules: {data: dataPath},
           exact: true,

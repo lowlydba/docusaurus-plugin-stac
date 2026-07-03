@@ -44,6 +44,17 @@ const config = {
   url: process.env.DOCS_URL || 'https://example.com',
   baseUrl: process.env.DOCS_BASE_URL || '/',
   favicon: undefined,
+  // GitHub Pages redirects directory-style URLs (e.g. `/stac`) to their
+  // trailing-slash form (`/stac/`). Without this, Docusaurus's client router
+  // can fail to match the trailing-slash URL after hydration and render a
+  // NotFound page even though the server-rendered HTML was correct.
+  trailingSlash: true,
+  // Deliberately non-fatal: when pointed at Overture's live catalog (see
+  // deploy-demo.yml), STAC_MAX_ITEMS caps items per collection so the build
+  // stays bounded. Items beyond the cap are lazy-loaded client-side rather
+  // than statically rendered, so some pagination/breadcrumb links can point
+  // at pages that don't exist as static routes. That's expected here, not a
+  // bug — warn instead of failing the build.
   onBrokenLinks: 'warn',
   markdown: {
     hooks: {
