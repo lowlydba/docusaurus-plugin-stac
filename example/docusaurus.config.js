@@ -70,7 +70,9 @@ const config = {
       ({
         docs: false,
         blog: false,
-        theme: {},
+        theme: {
+          customCss: require.resolve('./src/css/custom.css'),
+        },
       }),
     ],
   ],

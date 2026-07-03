@@ -19,7 +19,7 @@ test.describe('docusaurus-plugin-stac example site', () => {
     // Search box present at the root.
     await expect(page.getByPlaceholder('Search the catalog…')).toBeVisible();
     // Child collection link is in the server-rendered HTML.
-    await expect(page.getByRole('link', {name: /Sentinel-2 Sample/})).toBeVisible();
+    await expect(page.getByRole('main').getByRole('link', {name: /Sentinel-2 Sample/})).toBeVisible();
     await shot(page, 'catalog');
   });
 

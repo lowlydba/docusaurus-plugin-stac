@@ -151,6 +151,11 @@ export function getFieldLabel(key: string): string {
   return FIELD_REGISTRY[key]?.label ?? prettifyKey(key);
 }
 
+/** Whether a key has a registered custom value formatter. */
+export function hasFieldFormatter(key: string): boolean {
+  return typeof FIELD_REGISTRY[key]?.format === 'function';
+}
+
 export function formatFieldValue(key: string, value: unknown): string {
   if (value === null || value === undefined) return '\u2014';
   const def = FIELD_REGISTRY[key];

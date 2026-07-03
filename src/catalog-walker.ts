@@ -158,6 +158,16 @@ export async function walkCatalog(
   const nodes: StacNode[] = [];
   const visited = new Set<string>();
   const usedRoutePaths = new Set<string>();
+  // Some catalogs (e.g. Overture's dated release catalog) mark one `child`
+  // link as the current release, either via a boolean `latest: true` on the
+  // link itself or a top-level `latest: "<id>"` field on the parent naming
+  // the current child's id. When we spot one, we mirror that whole subtree
+  // under a sibling `.../latest` route below, so links like `/stac/latest/`
+  // keep working across releases without the caller needing to know (or
+  // update) the current dated segment. No extra crawling is involved — the
+  // "latest" child is already followed as a normal `child` link; we just
+  // duplicate its already-fetched node data under a second route path.
+  let latestChildRoutePath: string | undefined;
 
   function normalizeSourceKey(source: string): string {
     return isHttp(source) ? source : pathToFileURL(source).toString();
@@ -252,6 +262,14 @@ export async function walkCatalog(
         };
         node.children.push(ref);
         if (isItem) itemCount++;
+
+        if (!latestChildRoutePath && isChild) {
+          const linkStac = stac as {latest?: unknown};
+          const isLatest =
+            link.latest === true ||
+            (typeof linkStac.latest === 'string' && linkStac.latest === child.id);
+          if (isLatest) latestChildRoutePath = child.routePath;
+        }
       }
     }
 
@@ -266,5 +284,55 @@ export async function walkCatalog(
     );
   }
 
+  if (latestChildRoutePath) {
+    appendLatestAlias(nodes, latestChildRoutePath, usedRoutePaths);
+  }
+
   return {root, nodes};
+}
+
+/**
+ * Mirror an already-crawled subtree (the one whose root route path is
+ * `sourceRoutePath`) under a sibling `.../latest` route, so it stays
+ * addressable at a stable URL across releases. This duplicates route
+ * registration only — every node was already fetched once during the normal
+ * crawl (the "latest" child is followed like any other `child` link), so no
+ * extra network/filesystem reads happen here.
+ */
+function appendLatestAlias(
+  nodes: StacNode[],
+  sourceRoutePath: string,
+  usedRoutePaths: Set<string>,
+): void {
+  const sourceNode = nodes.find((n) => n.routePath === sourceRoutePath);
+  if (!sourceNode || sourceNode.parentRoutePath === undefined) return;
+
+  const aliasPrefix = `${sourceNode.parentRoutePath}/latest`.replace(/\/{2,}/g, '/');
+  if (usedRoutePaths.has(aliasPrefix)) {
+    // A real "latest" id already exists at this level — don't collide with it.
+    return;
+  }
+
+  const remap = (p: string): string => {
+    if (p === sourceRoutePath) return aliasPrefix;
+    if (p.startsWith(`${sourceRoutePath}/`)) {
+      return aliasPrefix + p.slice(sourceRoutePath.length);
+    }
+    return p;
+  };
+
+  const subtree = nodes.filter(
+    (n) => n.routePath === sourceRoutePath || n.routePath.startsWith(`${sourceRoutePath}/`),
+  );
+  const aliases = subtree.map(
+    (n): StacNode => ({
+      ...n,
+      routePath: remap(n.routePath),
+      parentRoutePath:
+        n.parentRoutePath !== undefined ? remap(n.parentRoutePath) : undefined,
+      children: n.children.map((c) => ({...c, routePath: remap(c.routePath)})),
+    }),
+  );
+  for (const alias of aliases) usedRoutePaths.add(alias.routePath);
+  nodes.push(...aliases);
 }

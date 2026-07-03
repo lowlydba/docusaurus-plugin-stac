@@ -1,0 +1,42 @@
+/* Example-site-only overrides (not part of the docusaurus-plugin-stac theme
+ * package — this file styles the demo site's own chrome).
+ *
+ * Infima's default `--ifm-color-primary` (#3578e5) only measures ~4.2:1
+ * against a white background, just under the 4.5:1 WCAG AA minimum for
+ * normal-weight text — it fails on the navbar's active link/brand text on
+ * every page. Replace the whole primary palette with an equivalent blue
+ * that keeps a comfortable margin above 4.5:1 in both color modes. */
+:root {
+  --ifm-color-primary: #1a56db;
+  --ifm-color-primary-dark: #1544ad;
+  --ifm-color-primary-darker: #123b97;
+  --ifm-color-primary-darkest: #0f3280;
+  --ifm-color-primary-light: #4074e8;
+  --ifm-color-primary-lighter: #4074e8;
+  --ifm-color-primary-lightest: #4074e8;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #8ab4f8;
+  --ifm-color-primary-dark: #5a95f5;
+  --ifm-color-primary-darker: #4286f4;
+  --ifm-color-primary-darkest: #2a76f2;
+  --ifm-color-primary-light: #bad3fb;
+  --ifm-color-primary-lighter: #d2e2fc;
+  --ifm-color-primary-lightest: #eaf2fe;
+}
+
+/* The footer is pinned to `style: 'dark'` in docusaurus.config.js so its
+ * background stays dark regardless of the active color mode. The plain
+ * `<a>` in the copyright string falls back to Infima's default link color
+ * (`--ifm-link-color`), which only measures ~2.8:1 against the dark footer
+ * background — well under the 4.5:1 WCAG AA minimum. Override with a
+ * lighter blue verified to pass, plus an underline so the link doesn't rely
+ * on color alone to read as a link. */
+.footer--dark .footer__copyright a {
+  color: #8ab4f8;
+  text-decoration: underline;
+}
+.footer--dark .footer__copyright a:hover {
+  color: #aecbfa;
+}

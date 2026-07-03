@@ -65,5 +65,6 @@ export function normalizeOptions(
     map: normalizeMap(options.map),
     itemsPerPage,
     search: options.search ?? true,
+    sidebar: options.sidebar ?? true,
   };
 }

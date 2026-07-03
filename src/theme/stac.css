@@ -6,10 +6,14 @@
  * of pill shapes/sizes/colors" that creeps in when each block invents its own
  * values. The color/surface/border tokens derive from Infima (`--ifm-*`)
  * variables so they adapt to light/dark themes automatically; the radii, spacing
- * and badge colors are fixed values shared across all components. */
+ * and badge colors are fixed values shared across all components.
+ *
+ * Tokens are declared on `.stac-shell` as well as `.stac-page`: when the
+ * sidebar is enabled, `.stac-page` only wraps the `<main>` column, and the
+ * sidebar renders as its *sibling* inside `.stac-shell` — a cousin, not a
+ * descendant — so it would otherwise see these custom properties as unset. */
+.stac-shell,
 .stac-page {
-  max-width: 960px;
-
   /* Corner radii — one small step for chips/controls, one for cards/surfaces. */
   --stac-radius-pill: 999px;
   --stac-radius-sm: 6px;
@@ -26,16 +30,174 @@
   --stac-surface: var(--ifm-background-surface-color);
   --stac-surface-muted: var(--ifm-color-emphasis-100);
 
-  /* Semantic badge colors, one per node type. */
+  /* Semantic badge colors, one per node type. All three pass 4.5:1 with the
+   * badge's white text (verified: catalog/collection already did; item's
+   * original teal #0d9488 only hit ~3.74:1, so it's darkened here). */
   --stac-badge-catalog: #64748b;
   --stac-badge-collection: #2563eb;
-  --stac-badge-item: #0d9488;
+  --stac-badge-item: #0f766e;
+}
+.stac-page {
+  max-width: 960px;
+}
+
+
+/* Two-column shell: a persistent catalog-tree sidebar next to the page
+ * content. `.stac-shell` replaces the plain centered `.container` on pages
+ * where the sidebar is enabled — `.stac-page` (and its design tokens) still
+ * lives on the inner `<main>`. Collapses to a single column on narrower
+ * viewports, matching the breakpoint Infima's own doc sidebar uses. */
+.stac-shell {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--stac-gap-lg);
+}
+.stac-shell__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.stac-tree {
+  flex: 0 0 272px;
+  position: sticky;
+  top: calc(var(--ifm-navbar-height, 3.75rem) + var(--stac-gap-md));
+  max-height: calc(100vh - var(--ifm-navbar-height, 3.75rem) - 2 * var(--stac-gap-md));
+  overflow-y: auto;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-md);
+  background: var(--stac-surface);
+  padding: var(--stac-gap-sm);
+}
+.stac-tree__label {
+  margin: 0 0 var(--stac-gap-xs);
+  padding: 0 var(--stac-gap-xs);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  /* emphasis-600 fails AA contrast at this weight/size in both themes —
+   * emphasis-700 matches the rest of the site's muted-label palette
+   * (breadcrumbs, pagination status, search count) and passes. */
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-tree__root,
+.stac-tree__children {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+.stac-tree__children {
+  /* Indent one step per depth level and draw a guide line down the left edge
+   * of each nested group so the hierarchy stays readable at a glance, the
+   * way most file-tree UIs do it. */
+  padding-left: 0.9rem;
+  margin-left: 0.55rem;
+  border-left: 1px solid var(--stac-border-color);
+}
+.stac-tree__item {
+  margin: 0.1rem 0;
+}
+.stac-tree__row {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.stac-tree__toggle {
+  flex: 0 0 auto;
+  width: 1.2rem;
+  height: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--stac-radius-sm);
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  /* emphasis-600 fails AA contrast on both themes — emphasis-700 matches. */
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.65rem;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.stac-tree__toggle:hover {
+  background: var(--stac-surface-muted);
+  color: var(--ifm-color-emphasis-900);
+}
+.stac-tree__toggle--leaf {
+  cursor: default;
+  opacity: 0;
+}
+.stac-tree__link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.3rem 0.45rem;
+  border-radius: var(--stac-radius-sm);
+  color: var(--ifm-color-emphasis-800);
+  text-decoration: none;
+}
+.stac-tree__link:hover {
+  /* `--stac-surface-muted` (emphasis-100) inverts to *darker than the card
+   * background* in dark mode, which reads as barely-there/low-contrast on
+   * hover. Emphasis-200 stays reliably lighter than the surrounding surface
+   * in both themes, so it always reads as a clear hover highlight. */
+  background: var(--ifm-color-emphasis-200);
+  text-decoration: none;
+  color: var(--ifm-color-emphasis-900);
+}
+.stac-tree__link--active {
+  /* `--ifm-color-primary-lightest`/`-darkest` don't guarantee a compliant
+   * pair at this text size in dark mode (measured ~3.8:1). Use the same
+   * high-contrast neutral text/background as hover, and signal "active"
+   * with a decorative colored accent stripe instead of relying on a
+   * low-contrast tinted background for the cue. */
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-emphasis-900);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--stac-badge-collection);
+}
+.stac-tree__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stac-tree .stac-badge {
+  /* The tree is dense — shrink the badge so titles stay legible, but keep it
+   * a real pill (not just tinted text) so node types stay scannable. */
+  font-size: 0.58rem;
+  padding: 0.1rem 0.4rem;
+  flex: 0 0 auto;
+}
+@media (max-width: 996px) {
+  /* No room for a persistent sidebar on tablets/phones; fall back to the
+   * single-column layout (breadcrumbs still provide catalog navigation). */
+  .stac-tree {
+    display: none;
+  }
+  .stac-shell {
+    display: block;
+  }
 }
 
 .stac-breadcrumbs {
   font-size: 0.9rem;
   margin-bottom: var(--stac-gap-md);
   color: var(--ifm-color-emphasis-700);
+}
+.stac-breadcrumbs a {
+  /* Default Infima anchor styling (color-only, no underline) doesn't
+   * sufficiently distinguish these links from the surrounding breadcrumb
+   * text for WCAG 1.4.1 (Use of Color) — add an underline so the link
+   * affordance doesn't depend on color contrast alone. */
+  text-decoration: underline;
+  text-decoration-color: var(--stac-border-color);
+}
+.stac-breadcrumbs a:hover {
+  text-decoration-color: currentColor;
 }
 .stac-breadcrumbs__sep {
   margin: 0 var(--stac-gap-xs);
@@ -177,6 +339,27 @@
 .stac-kv tr:last-child td {
   border-bottom: none;
 }
+/* `overflow: hidden` on a <table> doesn't reliably clip cell backgrounds to
+ * the table's border-radius in every browser — especially once a <caption>
+ * is present, which sits inside the table's border box above the first row.
+ * Rounding the actual corner cells directly is the robust cross-browser fix,
+ * so the top/bottom corners of the key/value surface never render square. */
+.stac-kv tr:first-child th:first-child,
+.stac-kv tr:first-child td:first-child {
+  border-top-left-radius: var(--stac-radius-md);
+}
+.stac-kv tr:first-child th:last-child,
+.stac-kv tr:first-child td:last-child {
+  border-top-right-radius: var(--stac-radius-md);
+}
+.stac-kv tr:last-child th:first-child,
+.stac-kv tr:last-child td:first-child {
+  border-bottom-left-radius: var(--stac-radius-md);
+}
+.stac-kv tr:last-child th:last-child,
+.stac-kv tr:last-child td:last-child {
+  border-bottom-right-radius: var(--stac-radius-md);
+}
 /* Explicit cell backgrounds override Infima's default per-row striping so the
  * key/value columns read as two clean, consistent bands. */
 .stac-kv__key {
@@ -242,6 +425,10 @@
   align-items: center;
   gap: 0.4rem;
   min-width: 0;
+  text-decoration: none;
+}
+.stac-download__link:hover .stac-download__name {
+  text-decoration: underline;
 }
 .stac-download__icon {
   flex: none;
@@ -260,6 +447,7 @@
   border-radius: var(--stac-radius-sm);
   background: var(--stac-surface-muted);
   color: var(--ifm-color-emphasis-700);
+  text-decoration: none;
 }
 .stac-copy {
   display: inline-flex;
@@ -297,6 +485,67 @@
   gap: var(--stac-gap-sm);
   margin: var(--stac-gap-sm) 0 0;
   font-size: 0.85rem;
+}
+
+/* Inline JSON code block for nested object values (e.g. storage:schemes). */
+.stac-json {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  background: var(--stac-surface-muted);
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-sm);
+  overflow-x: auto;
+  white-space: pre;
+}
+.stac-json code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--ifm-font-family-monospace);
+  color: var(--ifm-color-emphasis-800);
+}
+.stac-json__key {
+  /* `--ifm-color-primary` (Infima's default link blue) only measures ~4.2:1
+   * against this block's near-white background — just under the 4.5:1 AA
+   * minimum for normal-weight text. Use a fixed, verified-accessible blue
+   * instead (consistent with the string/number/placeholder tokens below,
+   * which are already bespoke per-theme colors rather than inherited ones). */
+  color: #1d4ed8;
+  font-weight: 600;
+}
+.stac-json__string {
+  color: #2a7d4f;
+}
+.stac-json__number,
+.stac-json__boolean,
+.stac-json__null {
+  color: #b0570b;
+}
+/* Our template placeholders (e.g. {bucket}, {region}) stand out from literal
+ * string content so they read as "fill this in", not real values. */
+.stac-json__placeholder {
+  color: #8a4bd6;
+  font-weight: 700;
+  background: color-mix(in srgb, #8a4bd6 12%, transparent);
+  border-radius: var(--stac-radius-sm);
+  padding: 0 0.15rem;
+}
+[data-theme='dark'] .stac-json__key {
+  color: #8ab4f8;
+}
+[data-theme='dark'] .stac-json__string {
+  color: #6dd18f;
+}
+[data-theme='dark'] .stac-json__number,
+[data-theme='dark'] .stac-json__boolean,
+[data-theme='dark'] .stac-json__null {
+  color: #e0954a;
+}
+[data-theme='dark'] .stac-json__placeholder {
+  color: #c9a3f5;
+  background: color-mix(in srgb, #c9a3f5 18%, transparent);
 }
 
 /* Map */

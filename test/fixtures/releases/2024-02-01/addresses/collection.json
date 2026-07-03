@@ -1,0 +1,17 @@
+{
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "id": "addresses",
+  "title": "Addresses",
+  "description": "Fixture addresses collection.",
+  "license": "ODbL-1.0",
+  "extent": {
+    "spatial": {"bbox": [[-180, -90, 180, 90]]},
+    "temporal": {"interval": [["2024-02-01T00:00:00Z", null]]}
+  },
+  "links": [
+    {"rel": "self", "href": "collection.json"},
+    {"rel": "root", "href": "../../catalog.json"},
+    {"rel": "parent", "href": "../catalog.json"}
+  ]
+}
