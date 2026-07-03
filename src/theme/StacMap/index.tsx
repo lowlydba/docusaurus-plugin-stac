@@ -42,6 +42,11 @@ function MapImpl({node, map}: StacMapProps): React.JSX.Element {
         center: bbox ? [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2] : [0, 0],
         zoom: bbox ? 4 : 1,
         attributionControl: true,
+        // Large/near-global footprints (e.g. a division's bbox) fit at a very
+        // low zoom, where MapLibre's default repeats the world side-by-side
+        // to fill the viewport. A single footprint map never benefits from
+        // that, so disable it — one world, clipped, reads far more cleanly.
+        renderWorldCopies: false,
       });
       mapInstance = instance;
       instance.addControl(new maplibregl.NavigationControl(), 'top-right');
