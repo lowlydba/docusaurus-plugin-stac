@@ -9,7 +9,7 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 const fixtureDir = path.resolve(dir, '../fixtures/catalog');
 
 function makeContext(siteDir: string): any {
-  return {siteDir, generatedFilesDir: siteDir};
+  return {siteDir, generatedFilesDir: siteDir, baseUrl: '/'};
 }
 
 describe('pluginStac', () => {
