@@ -1,0 +1,68 @@
+{
+  "name": "docusaurus-plugin-stac",
+  "version": "0.1.0",
+  "description": "Docusaurus plugin that ingests a static STAC catalog and generates real static HTML pages per Catalog, Collection and Item at build time.",
+  "keywords": [
+    "docusaurus",
+    "docusaurus-plugin",
+    "stac",
+    "spatiotemporal",
+    "geospatial",
+    "catalog",
+    "maplibre",
+    "pmtiles",
+    "overture"
+  ],
+  "license": "MIT",
+  "author": "John McCall",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lowlydba/docusaurus-plugin-stac.git"
+  },
+  "type": "module",
+  "workspaces": [
+    "example"
+  ],
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./theme/*": "./lib/theme/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc && node scripts/copy-assets.mjs",
+    "watch": "tsc --watch",
+    "clean": "node -e \"require('fs').rmSync('lib',{recursive:true,force:true})\"",
+    "prepublishOnly": "npm run clean && npm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "maplibre-gl": "^4.7.1",
+    "pmtiles": "^3.2.1"
+  },
+  "peerDependencies": {
+    "@docusaurus/core": "^3.0.0",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "devDependencies": {
+    "@docusaurus/core": "^3.7.0",
+    "@docusaurus/module-type-aliases": "^3.7.0",
+    "@docusaurus/types": "^3.7.0",
+    "@types/react": "^18.3.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

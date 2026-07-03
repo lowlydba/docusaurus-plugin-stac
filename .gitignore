@@ -47,6 +47,12 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
+# Compiled plugin output (built on publish)
+/lib
+
+# Docusaurus build output
+build/
+
 # Optional npm cache directory
 .npm
 
