@@ -271,6 +271,7 @@
   border-radius: var(--stac-radius-pill);
   color: #fff;
   vertical-align: middle;
+  text-decoration: none;
 }
 .stac-badge--catalog {
   background: var(--stac-badge-catalog);
@@ -296,6 +297,7 @@
   border-radius: var(--stac-radius-pill);
   vertical-align: middle;
   cursor: default;
+  text-decoration: none;
 }
 .stac-pill--moving {
   color: #92400e;
@@ -330,6 +332,10 @@
 .stac-child-list__link:hover {
   background: var(--stac-surface-muted);
   border-color: var(--ifm-color-emphasis-500);
+  text-decoration: none;
+}
+.stac-child-list__link:hover .stac-child-list__title {
+  text-decoration: underline;
 }
 .stac-child-list__title {
   font-weight: 500;
@@ -455,6 +461,9 @@
 }
 .stac-download__link:hover .stac-download__name {
   text-decoration: underline;
+}
+.stac-download__link:hover {
+  text-decoration: none;
 }
 .stac-download__icon {
   flex: none;
@@ -738,6 +747,10 @@
 }
 .stac-search__link:hover {
   background: var(--stac-surface-muted);
+  text-decoration: none;
+}
+.stac-search__link:hover .stac-search__title {
+  text-decoration: underline;
 }
 
 /* Pagination */
