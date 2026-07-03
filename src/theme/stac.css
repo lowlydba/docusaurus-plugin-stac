@@ -58,7 +58,7 @@
 }
 
 .stac-tree {
-  flex: 0 0 272px;
+  flex: 0 0 320px;
   position: sticky;
   top: calc(var(--ifm-navbar-height, 3.75rem) + var(--stac-gap-md));
   max-height: calc(100vh - var(--ifm-navbar-height, 3.75rem) - 2 * var(--stac-gap-md));
@@ -546,6 +546,69 @@
 [data-theme='dark'] .stac-json__placeholder {
   color: #c9a3f5;
   background: color-mix(in srgb, #c9a3f5 18%, transparent);
+}
+
+/* Storage extension's `storage:schemes`: resolved, copyable URIs instead of
+ * the raw `{bucket}`/`{region}`-templated JSON (still available below,
+ * collapsed, via <details>). */
+.stac-storage-schemes__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stac-gap-sm);
+}
+.stac-storage-schemes__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+}
+.stac-storage-schemes__id {
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-storage-schemes__type {
+  font-size: 0.68rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: var(--stac-radius-pill);
+  background: var(--stac-surface-muted);
+  border: 1px solid var(--stac-border-color);
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-storage-schemes__uri {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.stac-storage-schemes__uri code,
+.stac-storage-schemes__uri-raw {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8rem;
+  padding: 0.15rem 0.45rem;
+  background: var(--stac-surface-muted);
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-sm);
+  word-break: break-all;
+}
+.stac-storage-schemes__raw {
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+}
+.stac-storage-schemes__raw summary {
+  cursor: pointer;
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-storage-schemes__raw summary:hover {
+  color: var(--ifm-color-emphasis-900);
+}
+.stac-storage-schemes__raw .stac-json {
+  margin-top: 0.4rem;
 }
 
 /* Map */

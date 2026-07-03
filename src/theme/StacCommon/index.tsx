@@ -17,6 +17,8 @@ import {
   hasFieldFormatter,
 } from '../../fields/registry.js';
 import {JsonBlock} from './JsonBlock.js';
+import {CheckIcon, CopyIcon} from './CopyButton.js';
+import {StorageSchemesValue} from './StorageSchemes.js';
 
 // ---------------------------------------------------------------------------
 // Formatting helpers
@@ -132,47 +134,6 @@ function DownloadIcon({className}: {className?: string}): React.JSX.Element {
       <path d="M12 3v12" />
       <path d="m7 12 5 5 5-5" />
       <path d="M5 21h14" />
-    </svg>
-  );
-}
-
-function CopyIcon({className}: {className?: string}): React.JSX.Element {
-  return (
-    <svg
-      className={className}
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <rect x="9" y="9" width="11" height="11" rx="2" />
-      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
-    </svg>
-  );
-}
-
-function CheckIcon({className}: {className?: string}): React.JSX.Element {
-  return (
-    <svg
-      className={className}
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M20 6 9 17l-5-5" />
     </svg>
   );
 }
@@ -693,7 +654,11 @@ export function PropertiesTable({
               {getFieldLabel(key)}
             </th>
             <td className="stac-kv__value">
-              {isNestedObject(properties[key]) && !hasFieldFormatter(key) ? (
+              {key === 'storage:schemes' && isNestedObject(properties[key]) ? (
+                <StorageSchemesValue
+                  value={properties[key] as Record<string, unknown>}
+                />
+              ) : isNestedObject(properties[key]) && !hasFieldFormatter(key) ? (
                 <JsonBlock value={properties[key]} />
               ) : (
                 formatFieldValue(key, properties[key])

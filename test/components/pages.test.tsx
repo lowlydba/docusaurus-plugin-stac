@@ -248,11 +248,9 @@ describe('StacItem', () => {
         links: [],
         assets: {},
         properties: {
-          'storage:schemes': {
-            aws: {
-              type: 'aws-s3',
-              platform: 'https://{bucket}.s3.{region}.amazonaws.com',
-            },
+          'proj:transform': {
+            a: '{bucket}',
+            b: '{region}',
           },
         },
       } as StacNode['stac'],
@@ -263,5 +261,56 @@ describe('StacItem', () => {
       container.querySelectorAll('.stac-json__placeholder'),
     ).map((el) => el.textContent);
     expect(placeholders).toEqual(['{bucket}', '{region}']);
+  });
+
+  it('renders storage:schemes as resolved, copyable URIs with raw JSON collapsed', () => {
+    const node = baseNode({
+      type: 'Item',
+      routePath: '/stac/item',
+      title: 'The Item',
+      stac: {
+        id: 'item',
+        links: [],
+        assets: {},
+        properties: {
+          'storage:schemes': {
+            aws: {
+              type: 'aws-s3',
+              platform: 'https://{bucket}.s3.{region}.amazonaws.com',
+              bucket: 'overturemaps-us-west-2',
+              region: 'us-west-2',
+            },
+            azure: {
+              type: 'ms-azure',
+              platform: 'https://{account}.blob.core.windows.net/',
+              account: 'overturemapswestus2',
+            },
+          },
+        },
+      } as StacNode['stac'],
+    });
+    const {container} = render(<StacItem data={pageData(node)} />);
+
+    // Resolved URIs are shown (placeholders filled in from sibling fields).
+    expect(
+      screen.getByText('https://overturemaps-us-west-2.s3.us-west-2.amazonaws.com'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('https://overturemapswestus2.blob.core.windows.net/'),
+    ).toBeInTheDocument();
+
+    // A copy button is offered per resolved URI.
+    expect(
+      screen.getByRole('button', {name: 'Copy aws storage URI'}),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', {name: 'Copy azure storage URI'}),
+    ).toBeInTheDocument();
+
+    // Raw JSON is still available, but collapsed behind a <details> toggle.
+    const details = container.querySelector('details.stac-storage-schemes__raw');
+    expect(details).not.toBeNull();
+    expect(details).not.toHaveAttribute('open');
+    expect(details?.querySelector('pre.stac-json')).not.toBeNull();
   });
 });
