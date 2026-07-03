@@ -132,7 +132,7 @@ jobs:
 
   zizmor:
     name: Workflow security (zizmor)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       security-events: write # upload SARIF results to the Security tab
@@ -149,7 +149,7 @@ jobs:
 
   are-we-good:
     name: CI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [build, test, e2e, zizmor]
     if: always()
     permissions: {}
