@@ -1,6 +1,7 @@
 import type {
   NormalizedStacMapOptions,
   NormalizedStacPluginOptions,
+  StacNotFoundHintOptions,
   StacPluginOptions,
 } from './types.js';
 
@@ -38,6 +39,27 @@ export function normalizeMap(
   };
 }
 
+/**
+ * Drops malformed link entries (missing a `label` or `href`) rather than
+ * letting them reach the client, and collapses an all-empty hint down to
+ * `undefined` so downstream code can use a single truthy check to decide
+ * whether there's anything to render.
+ */
+export function normalizeNotFoundHint(
+  hint: StacPluginOptions['notFoundHint'],
+): StacNotFoundHintOptions | undefined {
+  if (!hint) return undefined;
+  const links = (hint.links ?? []).filter(
+    (link) => typeof link?.label === 'string' && typeof link?.href === 'string',
+  );
+  if (!hint.title && !hint.description && links.length === 0) return undefined;
+  return {
+    title: hint.title,
+    description: hint.description,
+    ...(links.length > 0 ? {links} : {}),
+  };
+}
+
 export function normalizeOptions(
   options: StacPluginOptions,
 ): NormalizedStacPluginOptions {
@@ -66,5 +88,6 @@ export function normalizeOptions(
     itemsPerPage,
     search: options.search ?? true,
     sidebar: options.sidebar ?? true,
+    notFoundHint: normalizeNotFoundHint(options.notFoundHint),
   };
 }

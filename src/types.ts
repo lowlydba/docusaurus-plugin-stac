@@ -231,6 +231,43 @@ export interface StacPluginOptions {
    * full tree isn't a useful navigation aid.
    */
   sidebar?: boolean;
+  /**
+   * Optional content for a "looking for something that's gone?" hint that
+   * this plugin composes into the site's 404 page (alongside, not instead of,
+   * the theme's normal "Page Not Found" copy). This plugin has no built-in
+   * opinions about *why* a page might be missing — a data-retention policy, a
+   * moved catalog, whatever applies to your site — supply your own
+   * title/description/links here. Omit entirely to leave the 404 page
+   * untouched.
+   */
+  notFoundHint?: StacNotFoundHintOptions;
+}
+
+/** A single suggested link shown in the 404 hint (see `notFoundHint`). */
+export interface StacNotFoundHintLink {
+  /** Visible link text, e.g. "Data retention policy". */
+  label: string;
+  /**
+   * Absolute (`https://...`) or site-relative (e.g. `/stac/latest`) URL.
+   * Rendered via Docusaurus's `Link`, so relative paths get the site's
+   * `baseUrl` prefixed automatically and absolute URLs pass through as
+   * plain external links.
+   */
+  href: string;
+}
+
+/** Configurable content for the 404-page hint (see `StacPluginOptions.notFoundHint`). */
+export interface StacNotFoundHintOptions {
+  /**
+   * Heading for the hint card. Defaults to a generic "looking for something
+   * that used to be here?" message when omitted but `description`/`links`
+   * are provided.
+   */
+  title?: string;
+  /** Free-form explanation shown under the title. */
+  description?: string;
+  /** Suggested links, e.g. a retention policy or a stable "latest" URL. */
+  links?: StacNotFoundHintLink[];
 }
 
 /** Options after defaults are applied. */
@@ -254,6 +291,7 @@ export interface NormalizedStacPluginOptions {
   itemsPerPage: number;
   search: boolean;
   sidebar: boolean;
+  notFoundHint?: StacNotFoundHintOptions;
 }
 
 // ---------------------------------------------------------------------------
@@ -294,6 +332,7 @@ export interface StacGlobalData {
   sidebar: boolean;
   tree: StacNavNode;
   index: StacSearchEntry[];
+  notFoundHint?: StacNotFoundHintOptions;
 }
 
 export interface StacNavNode {

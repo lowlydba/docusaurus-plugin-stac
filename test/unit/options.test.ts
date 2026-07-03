@@ -4,6 +4,7 @@ import {
   normalizeRouteBase,
   normalizeMap,
   normalizeOptions,
+  normalizeNotFoundHint,
   DEFAULT_ROUTE_BASE,
   DEFAULT_MAP_HEIGHT,
   DEFAULT_FOOTPRINT_COLOR,
@@ -120,5 +121,60 @@ describe('normalizeOptions', () => {
     expect(
       normalizeOptions({path: 'c', itemsPerPage: -5}).itemsPerPage,
     ).toBe(DEFAULT_ITEMS_PER_PAGE);
+  });
+
+  it('threads a valid notFoundHint through', () => {
+    const o = normalizeOptions({
+      path: 'c',
+      notFoundHint: {
+        title: 'Gone?',
+        description: 'It aged out.',
+        links: [{label: 'Policy', href: '/policy'}],
+      },
+    });
+    expect(o.notFoundHint).toEqual({
+      title: 'Gone?',
+      description: 'It aged out.',
+      links: [{label: 'Policy', href: '/policy'}],
+    });
+  });
+
+  it('omits notFoundHint entirely when not configured', () => {
+    expect(normalizeOptions({path: 'c'}).notFoundHint).toBeUndefined();
+  });
+});
+
+describe('normalizeNotFoundHint', () => {
+  it('returns undefined for an unset hint', () => {
+    expect(normalizeNotFoundHint(undefined)).toBeUndefined();
+  });
+
+  it('returns undefined when title/description/links are all empty', () => {
+    expect(normalizeNotFoundHint({})).toBeUndefined();
+    expect(normalizeNotFoundHint({links: []})).toBeUndefined();
+  });
+
+  it('keeps a title-only hint', () => {
+    expect(normalizeNotFoundHint({title: 'Gone?'})).toEqual({title: 'Gone?'});
+  });
+
+  it('drops malformed link entries but keeps well-formed ones', () => {
+    const hint = normalizeNotFoundHint({
+      links: [
+        {label: 'Good', href: '/good'},
+        {label: 'Missing href'} as never,
+        {href: '/missing-label'} as never,
+      ],
+    });
+    expect(hint?.links).toEqual([{label: 'Good', href: '/good'}]);
+  });
+
+  it('omits the links field entirely when every entry was malformed', () => {
+    const hint = normalizeNotFoundHint({
+      description: 'Still has a description.',
+      links: [{label: 'Missing href'} as never],
+    });
+    expect(hint).toEqual({description: 'Still has a description.'});
+    expect(hint).not.toHaveProperty('links');
   });
 });

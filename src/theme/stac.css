@@ -645,6 +645,39 @@
   margin-top: 0.4rem;
 }
 
+/* Configurable 404-page hint (see StacCommon/NotFoundHint.tsx), composed
+ * into the site's 404 page by theme/NotFound/Content — rendered *outside*
+ * `.stac-page`/`.stac-shell`, so unlike the rest of this stylesheet it uses
+ * Infima's global `--ifm-*` variables directly rather than the `--stac-*`
+ * tokens above (which are scoped to STAC-rendered pages and would be unset
+ * on the site's plain 404 page). */
+.stac-not-found-hint {
+  margin-top: 2rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 10px;
+  background: var(--ifm-color-emphasis-100);
+}
+.stac-not-found-hint__title {
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+}
+.stac-not-found-hint__description {
+  color: var(--ifm-color-emphasis-700);
+  margin: 0 0 0.5rem;
+}
+.stac-not-found-hint__links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.stac-not-found-hint__links a {
+  font-weight: 500;
+}
+
 /* Map */
 .stac-map-section {
   margin: 1.5rem 0;

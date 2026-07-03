@@ -33,6 +33,27 @@ const stacOptions = {
   itemsPerPage: 6,
   search: true,
   map,
+  // Overture-specific 404 content: this plugin has no built-in opinion about
+  // *why* a page might be gone (that's the point — see NotFoundHint.tsx),
+  // but Overture's own data retention policy (GDPR "right to be forgotten"
+  // compliance) removes dated releases after 60 days, which is exactly the
+  // kind of dead link a demo pointed at Overture's live catalog will hit.
+  notFoundHint: {
+    title: 'Looking for a previous release?',
+    description:
+      "Overture Maps only keeps the last two monthly data releases publicly available (60 days), removing older ones to comply with GDPR's " +
+      "\"right to be forgotten\". If you followed a link to a dated release that's gone, the data has likely aged out rather than moved.",
+    links: [
+      {
+        label: "Overture's data retention policy",
+        href: 'https://docs.overturemaps.org/release-calendar/#data-retention-policy',
+      },
+      {
+        label: 'Browse the latest release instead',
+        href: '/stac',
+      },
+    ],
+  },
 };
 if (maxItemsPerCollection !== undefined) {
   stacOptions.maxItemsPerCollection = maxItemsPerCollection;

@@ -120,6 +120,7 @@ export default function pluginStac(
         sidebar: options.sidebar,
         tree: buildNavTree(content),
         index: buildSearchIndex(content),
+        notFoundHint: options.notFoundHint,
       };
       setGlobalData(globalData);
 
@@ -188,4 +189,6 @@ export type {
   StacPageData,
   StacGlobalData,
   StacSearchEntry,
+  StacNotFoundHintOptions,
+  StacNotFoundHintLink,
 } from './types.js';
