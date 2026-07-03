@@ -18,7 +18,8 @@ import {
 } from '../../fields/registry.js';
 import {JsonBlock} from './JsonBlock.js';
 import {CopyLinkButton} from './CopyButton.js';
-import {StorageSchemesValue} from './StorageSchemes.js';
+import {StorageSchemesValue, detectStorageProvider} from './StorageSchemes.js';
+import {ProviderIcon} from './ProviderIcons.js';
 import {isPlainObject} from '../../utils.js';
 
 export {CopyLinkButton} from './CopyButton.js';
@@ -634,12 +635,14 @@ export function AssetList({
         {entries.map(([key, asset]) => {
           const name = asset.title ?? key;
           const ext = assetExtension(asset.href);
+          const provider = detectStorageProvider(key, {}, asset.href);
           const hasMeta =
             Boolean(asset.type) ||
             (Array.isArray(asset.roles) && asset.roles.length > 0);
           return (
             <li key={key} className="stac-assets__item">
               <div className="stac-download">
+                {provider !== 'generic' && <ProviderIcon provider={provider} />}
                 <DownloadLink
                   href={asset.href}
                   className="stac-assets__link"

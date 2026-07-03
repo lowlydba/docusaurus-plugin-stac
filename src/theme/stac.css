@@ -210,10 +210,17 @@
 
 .stac-header {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--stac-gap-xs);
+  margin-bottom: var(--stac-gap-md);
+}
+.stac-header__badges,
+.stac-header__meta {
+  display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--stac-gap-sm);
-  margin-bottom: var(--stac-gap-sm);
 }
 .stac-title {
   margin: 0;
@@ -308,6 +315,32 @@
   color: #fde68a;
   background: rgba(146, 64, 14, 0.35);
   border-color: rgba(253, 230, 138, 0.4);
+}
+
+/* Two-segment key:value pill (shields.io-style) — a muted key label butted
+   against a monospace value. Neutral by design so it reads as a fact, not a
+   status/alert, and doesn't compete with the colored type badges. */
+.stac-kv-pill {
+  display: inline-flex;
+  align-items: stretch;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.6;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-pill);
+  overflow: hidden;
+  vertical-align: middle;
+}
+.stac-kv-pill__key {
+  padding: 0.05rem 0.5rem;
+  background: var(--stac-surface-muted);
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-kv-pill__val {
+  padding: 0.05rem 0.5rem;
+  background: var(--stac-surface);
+  color: var(--ifm-color-emphasis-900);
+  font-family: var(--ifm-font-family-monospace);
 }
 
 /* Child list */

@@ -3,6 +3,7 @@ import Translate, {translate} from '@docusaurus/Translate';
 
 import {JsonBlock} from './JsonBlock.js';
 import {CopyTextButton} from './CopyButton.js';
+import {KvPill} from './KvPill.js';
 import {ProviderIcon, type StorageProviderKind} from './ProviderIcons.js';
 import {isPlainObject} from '../../utils.js';
 
@@ -86,6 +87,17 @@ export function StorageSchemesValue({
               <div className="stac-storage-schemes__head">
                 <span className="stac-storage-schemes__id">{id}</span>
                 <ProviderIcon provider={provider} />
+                {typeof scheme.requester_pays === 'boolean' && (
+                  <KvPill
+                    label={translate({
+                      id: 'stac.storage.requesterPays',
+                      message: 'requester pays',
+                      description:
+                        'Key label for the storage-scheme requester_pays flag pill',
+                    })}
+                    value={String(scheme.requester_pays)}
+                  />
+                )}
               </div>
               {uri ? (
                 <div className="stac-storage-schemes__uri">
