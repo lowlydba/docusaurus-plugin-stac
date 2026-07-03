@@ -210,6 +210,12 @@ export interface StacPluginOptions {
   itemsPerPage?: number;
   /** Whether to build a client search box on the catalog root. Defaults to true. */
   search?: boolean;
+  /**
+   * Whether to render a persistent, collapsible catalog-tree sidebar on every
+   * page. Defaults to true. Set to `false` for very large catalogs where the
+   * full tree isn't a useful navigation aid.
+   */
+  sidebar?: boolean;
 }
 
 /** Options after defaults are applied. */
@@ -232,6 +238,7 @@ export interface NormalizedStacPluginOptions {
   map: NormalizedStacMapOptions;
   itemsPerPage: number;
   search: boolean;
+  sidebar: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -244,6 +251,7 @@ export interface StacPageData {
   map: NormalizedStacMapOptions;
   itemsPerPage: number;
   searchEnabled: boolean;
+  sidebarEnabled: boolean;
   /** Served path to this node's canonical STAC JSON (baseUrl-prefixed). */
   jsonHref?: string;
   /** schema.org `Dataset` JSON-LD describing this node, for agents/crawlers. */
@@ -268,6 +276,7 @@ export interface StacGlobalData {
   map: NormalizedStacMapOptions;
   itemsPerPage: number;
   search: boolean;
+  sidebar: boolean;
   tree: StacNavNode;
   index: StacSearchEntry[];
 }

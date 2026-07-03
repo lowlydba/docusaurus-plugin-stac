@@ -131,6 +131,7 @@ Then open `example/build/stac/index.html` (or `npm run serve --workspace example
 | `itemsPerPage`  | `number`                      | `25`         | Page size for paginated child lists (also the lazy load batch size).        |
 | `search`        | `boolean`                     | `true`       | Build a client-side search index + search UI.                               |
 | `map`           | `object \| false`             | enabled      | Map configuration, or `false` to disable maps entirely.                     |
+| `sidebar`       | `boolean`                     | `true`       | Render a collapsible catalog-tree sidebar alongside every page.             |
 
 ### Map options
 

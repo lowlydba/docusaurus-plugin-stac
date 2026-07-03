@@ -32,6 +32,107 @@
   --stac-badge-item: #0d9488;
 }
 
+/* Two-column shell: a persistent catalog-tree sidebar next to the page
+ * content. `.stac-shell` replaces the plain centered `.container` on pages
+ * where the sidebar is enabled — `.stac-page` (and its design tokens) still
+ * lives on the inner `<main>`. Collapses to a single column on narrower
+ * viewports, matching the breakpoint Infima's own doc sidebar uses. */
+.stac-shell {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--stac-gap-lg);
+}
+.stac-shell__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.stac-tree {
+  flex: 0 0 260px;
+  position: sticky;
+  top: calc(var(--ifm-navbar-height, 3.75rem) + var(--stac-gap-md));
+  max-height: calc(100vh - var(--ifm-navbar-height, 3.75rem) - 2 * var(--stac-gap-md));
+  overflow-y: auto;
+  font-size: 0.86rem;
+  padding: var(--stac-gap-sm) 0;
+}
+.stac-tree__root,
+.stac-tree__children {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+.stac-tree__children {
+  padding-left: 1rem;
+}
+.stac-tree__item {
+  margin: 0.05rem 0;
+}
+.stac-tree__row {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.stac-tree__toggle {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--ifm-color-emphasis-600);
+  font-size: 0.7rem;
+}
+.stac-tree__toggle--leaf {
+  cursor: default;
+}
+.stac-tree__link {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--stac-radius-sm);
+  color: var(--ifm-color-emphasis-800);
+  text-decoration: none;
+}
+.stac-tree__link:hover {
+  background: var(--stac-surface-muted);
+  text-decoration: none;
+  color: var(--ifm-color-emphasis-900);
+}
+.stac-tree__link--active {
+  background: var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-emphasis-900);
+  font-weight: 600;
+}
+.stac-tree__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stac-tree .stac-badge {
+  /* The tree is dense — shrink the badge so titles stay legible. */
+  font-size: 0.6rem;
+  padding: 0.05rem 0.35rem;
+  flex: 0 0 auto;
+}
+@media (max-width: 996px) {
+  /* No room for a persistent sidebar on tablets/phones; fall back to the
+   * single-column layout (breadcrumbs still provide catalog navigation). */
+  .stac-tree {
+    display: none;
+  }
+  .stac-shell {
+    display: block;
+  }
+}
+
 .stac-breadcrumbs {
   font-size: 0.9rem;
   margin-bottom: var(--stac-gap-md);

@@ -44,14 +44,23 @@ function baseNode(part: Partial<StacNode> & Pick<StacNode, 'type'>): StacNode {
 }
 
 describe('StacCatalog', () => {
-  it('renders header, description, search box and children', () => {
+  it('renders header, description, search box, children and the sidebar tree', () => {
     __setPluginData({
       routeBasePath: '/stac',
       title: 'Root',
       map: mapDisabled,
       itemsPerPage: 25,
       search: true,
-      tree: {id: 'root', type: 'Catalog', title: 'Root', routePath: '/stac', children: []},
+      sidebar: true,
+      tree: {
+        id: 'root',
+        type: 'Catalog',
+        title: 'Root Catalog',
+        routePath: '/stac',
+        children: [
+          {id: 'c1', type: 'Collection', title: 'Coll 1', routePath: '/stac/c1', children: []},
+        ],
+      },
       index: [],
     });
     const node = baseNode({
@@ -63,15 +72,17 @@ describe('StacCatalog', () => {
         {id: 'c1', type: 'Collection', title: 'Coll 1', routePath: '/stac/c1'},
       ],
     });
-    render(<StacCatalog data={pageData(node)} />);
+    render(<StacCatalog data={pageData(node, {sidebarEnabled: true})} />);
     expect(screen.getByRole('heading', {name: 'Root Catalog'})).toBeInTheDocument();
     expect(screen.getByText('The root.')).toBeInTheDocument();
     expect(screen.getByText('Contents (1)')).toBeInTheDocument();
-    expect(screen.getByText('Coll 1')).toBeInTheDocument();
+    expect(screen.getAllByText('Coll 1').length).toBeGreaterThanOrEqual(1);
     // Search box only shows at the root when enabled.
     expect(
       screen.getByPlaceholderText('Search the catalog…'),
     ).toBeInTheDocument();
+    // The sidebar tree renders alongside the main content.
+    expect(screen.getByRole('navigation', {name: 'Catalog tree'})).toBeInTheDocument();
   });
 
   it('hides the search box when not root', () => {

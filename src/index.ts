@@ -117,6 +117,7 @@ export default function pluginStac(
         map: options.map,
         itemsPerPage: options.itemsPerPage,
         search: options.search,
+        sidebar: options.sidebar,
         tree: buildNavTree(content),
         index: buildSearchIndex(content),
       };
@@ -138,6 +139,7 @@ export default function pluginStac(
           map: options.map,
           itemsPerPage: options.itemsPerPage,
           searchEnabled: options.search,
+          sidebarEnabled: options.sidebar,
           jsonHref,
           jsonLd,
         };
