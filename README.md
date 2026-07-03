@@ -1,5 +1,8 @@
 # docusaurus-plugin-stac
 
+[![CI](https://github.com/lowlydba/docusaurus-plugin-stac/actions/workflows/ci.yml/badge.svg)](https://github.com/lowlydba/docusaurus-plugin-stac/actions/workflows/ci.yml)
+[![Built with Docusaurus](https://img.shields.io/badge/Built%20with-Docusaurus-3ECC5F?logo=docusaurus&logoColor=white)](https://docusaurus.io)
+
 A [Docusaurus](https://docusaurus.io) plugin that ingests a static
 [STAC](https://stacspec.org) (SpatioTemporal Asset Catalog) and generates **real,
 crawlable static HTML pages** for every Catalog, Collection and Item at build time.
