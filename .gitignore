@@ -47,6 +47,12 @@ web_modules/
 # TypeScript cache
 *.tsbuildinfo
 
+# Compiled plugin output (built on publish)
+/lib
+
+# Docusaurus build output
+build/
+
 # Optional npm cache directory
 .npm
 
@@ -141,3 +147,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Playwright / e2e artifacts
+/screenshots
+/test-results
+/playwright-report
+/playwright/.cache
+

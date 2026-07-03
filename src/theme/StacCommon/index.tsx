@@ -1,0 +1,488 @@
+import React, {useState} from 'react';
+import Link from '@docusaurus/Link';
+import Translate, {translate} from '@docusaurus/Translate';
+
+import type {
+  StacAsset,
+  StacChildRef,
+  StacItem,
+  StacLazyChildRef,
+  StacNode,
+  StacObject,
+} from '../../types.js';
+import {formatFieldValue, getFieldLabel} from '../../fields/registry.js';
+
+// ---------------------------------------------------------------------------
+// Formatting helpers
+// ---------------------------------------------------------------------------
+
+export function formatValue(value: unknown): string {
+  if (value === null || value === undefined) return '\u2014';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+/** Best-effort bbox `[west, south, east, north]` from a GeoJSON geometry. */
+export function bboxFromGeometry(geometry: unknown): number[] | undefined {
+  if (!geometry || typeof geometry !== 'object') return undefined;
+  const coords = (geometry as {coordinates?: unknown}).coordinates;
+  if (coords === undefined) return undefined;
+
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  const walk = (node: unknown): void => {
+    if (!Array.isArray(node)) return;
+    if (
+      node.length >= 2 &&
+      typeof node[0] === 'number' &&
+      typeof node[1] === 'number'
+    ) {
+      const [x, y] = node as number[];
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+      return;
+    }
+    for (const child of node) walk(child);
+  };
+
+  walk(coords);
+  if (!Number.isFinite(minX)) return undefined;
+  return [minX, minY, maxX, maxY];
+}
+
+export function itemBbox(node: StacNode): number[] | undefined {
+  return stacBbox(node.stac);
+}
+
+/** Best-effort `[west, south, east, north]` from a raw STAC object. */
+export function stacBbox(stac: unknown): number[] | undefined {
+  const s = stac as {bbox?: number[]; geometry?: unknown};
+  if (Array.isArray(s.bbox) && s.bbox.length >= 4) {
+    if (s.bbox.length >= 6) {
+      return [s.bbox[0], s.bbox[1], s.bbox[3], s.bbox[4]];
+    }
+    return s.bbox.slice(0, 4);
+  }
+  return bboxFromGeometry(s.geometry);
+}
+
+// ---------------------------------------------------------------------------
+// Shared presentational components
+// ---------------------------------------------------------------------------
+
+const TYPE_BADGE: Record<StacNode['type'], string> = {
+  Catalog: 'stac-badge--catalog',
+  Collection: 'stac-badge--collection',
+  Item: 'stac-badge--item',
+};
+
+export function TypeBadge({type}: {type: StacNode['type']}): React.JSX.Element {
+  return <span className={`stac-badge ${TYPE_BADGE[type]}`}>{type}</span>;
+}
+
+export function Breadcrumbs({
+  node,
+  routeBasePath,
+  rootTitle,
+}: {
+  node: StacNode;
+  routeBasePath: string;
+  rootTitle?: string;
+}): React.JSX.Element {
+  return (
+    <nav
+      className="stac-breadcrumbs"
+      aria-label={translate({
+        id: 'stac.breadcrumbs.aria',
+        message: 'Breadcrumb',
+      })}
+    >
+      <Link to={routeBasePath}>
+        {rootTitle ?? (
+          <Translate id="stac.breadcrumbs.catalog" description="Root crumb">
+            Catalog
+          </Translate>
+        )}
+      </Link>
+      {node.routePath !== routeBasePath && (
+        <>
+          <span className="stac-breadcrumbs__sep">/</span>
+          <span className="stac-breadcrumbs__current">{node.title}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+function ChildLink({child}: {child: StacChildRef}): React.JSX.Element {
+  return (
+    <Link to={child.routePath} className="stac-child-list__link">
+      <TypeBadge type={child.type} />
+      <span className="stac-child-list__title">{child.title}</span>
+    </Link>
+  );
+}
+
+/**
+ * A crawlable, client-paginated list of child records. Every child is rendered
+ * into the DOM (so crawlers see them all); pagination only toggles visibility.
+ */
+export function ChildList({
+  children,
+  itemsPerPage,
+}: {
+  children: StacChildRef[];
+  itemsPerPage?: number;
+}): React.JSX.Element {
+  const [page, setPage] = useState(0);
+
+  if (children.length === 0) {
+    return (
+      <p className="stac-empty">
+        <Translate id="stac.childList.empty">No child records.</Translate>
+      </p>
+    );
+  }
+
+  const perPage = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : children.length;
+  const pageCount = Math.ceil(children.length / perPage);
+  const start = page * perPage;
+  const end = start + perPage;
+
+  return (
+    <div className="stac-child-list-wrap">
+      <ul className="stac-child-list">
+        {children.map((c, i) => (
+          <li
+            key={c.routePath}
+            className="stac-child-list__item"
+            hidden={pageCount > 1 && (i < start || i >= end)}
+          >
+            <ChildLink child={c} />
+          </li>
+        ))}
+      </ul>
+      {pageCount > 1 && (
+        <div className="stac-pagination" role="navigation">
+          <button
+            type="button"
+            className="stac-pagination__btn"
+            disabled={page === 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            <Translate id="stac.pagination.prev">Previous</Translate>
+          </button>
+          <span className="stac-pagination__status">
+            <Translate
+              id="stac.pagination.status"
+              values={{current: page + 1, total: pageCount}}
+            >
+              {'Page {current} of {total}'}
+            </Translate>
+          </span>
+          <button
+            type="button"
+            className="stac-pagination__btn"
+            disabled={page >= pageCount - 1}
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+          >
+            <Translate id="stac.pagination.next">Next</Translate>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A client-only "load on demand" list for Items that were not materialized into
+ * static pages (they fell past `maxItemsPerCollection`). These are intentionally
+ * not crawlable — they're fetched in the browser when a human asks for them, so
+ * large/API-scale catalogs stay browsable without exploding the static build.
+ */
+export function LazyChildList({
+  lazyChildren,
+  batchSize,
+}: {
+  lazyChildren: StacLazyChildRef[];
+  batchSize?: number;
+}): React.JSX.Element | null {
+  const perBatch = batchSize && batchSize > 0 ? batchSize : 25;
+  const [visible, setVisible] = useState(0);
+  const [results, setResults] = useState<Record<number, LazyState>>({});
+
+  if (!lazyChildren || lazyChildren.length === 0) return null;
+
+  const loadRange = (from: number, to: number): void => {
+    for (let i = from; i < to; i++) {
+      setResults((r) => ({...r, [i]: {status: 'loading'}}));
+      const {href} = lazyChildren[i];
+      fetch(href)
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+          return res.json();
+        })
+        .then((stac: StacObject) =>
+          setResults((r) => ({...r, [i]: {status: 'loaded', stac}})),
+        )
+        .catch((err: unknown) =>
+          setResults((r) => ({
+            ...r,
+            [i]: {status: 'error', message: (err as Error)?.message ?? String(err)},
+          })),
+        );
+    }
+  };
+
+  const loadMore = (): void => {
+    const next = Math.min(visible + perBatch, lazyChildren.length);
+    loadRange(visible, next);
+    setVisible(next);
+  };
+
+  const remaining = lazyChildren.length - visible;
+
+  return (
+    <div className="stac-lazy">
+      <p className="stac-lazy__note">
+        <Translate
+          id="stac.lazy.note"
+          values={{count: lazyChildren.length}}
+          description="Explains the on-demand item list"
+        >
+          {
+            '{count} additional item(s) are loaded on demand and are not indexed by search engines.'
+          }
+        </Translate>
+      </p>
+      {visible > 0 && (
+        <ul className="stac-lazy__list">
+          {lazyChildren.slice(0, visible).map((child, i) => (
+            <li key={child.href} className="stac-lazy__item">
+              <LazyItemCard child={child} state={results[i]} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {remaining > 0 && (
+        <button
+          type="button"
+          className="stac-lazy__more button button--secondary"
+          onClick={loadMore}
+        >
+          <Translate
+            id="stac.lazy.loadMore"
+            values={{count: Math.min(perBatch, remaining)}}
+          >
+            {'Load {count} more'}
+          </Translate>
+        </button>
+      )}
+    </div>
+  );
+}
+
+type LazyState =
+  | {status: 'loading'}
+  | {status: 'error'; message: string}
+  | {status: 'loaded'; stac: StacObject};
+
+function LazyItemCard({
+  child,
+  state,
+}: {
+  child: StacLazyChildRef;
+  state: LazyState | undefined;
+}): React.JSX.Element {
+  const fallbackTitle =
+    child.title ?? child.href.split('/').pop() ?? child.href;
+
+  if (!state || state.status === 'loading') {
+    return (
+      <div className="stac-lazy__card stac-lazy__card--loading">
+        <span className="stac-lazy__card-title">{fallbackTitle}</span>{' '}
+        <Translate id="stac.lazy.loading">Loading…</Translate>
+      </div>
+    );
+  }
+
+  if (state.status === 'error') {
+    return (
+      <div className="stac-lazy__card stac-lazy__card--error">
+        <span className="stac-lazy__card-title">{fallbackTitle}</span>
+        <span className="stac-lazy__card-error">
+          <Translate id="stac.lazy.error" values={{message: state.message}}>
+            {'Could not load: {message}'}
+          </Translate>
+        </span>{' '}
+        <a href={child.href} className="stac-lazy__card-source">
+          <Translate id="stac.lazy.source">Source JSON</Translate>
+        </a>
+      </div>
+    );
+  }
+
+  const stac = state.stac as StacItem;
+  const title =
+    (typeof stac.title === 'string' && stac.title) || stac.id || fallbackTitle;
+  const properties =
+    stac.properties && typeof stac.properties === 'object'
+      ? stac.properties
+      : {};
+  const datetime =
+    typeof properties.datetime === 'string' ? properties.datetime : undefined;
+
+  return (
+    <div className="stac-lazy__card">
+      <div className="stac-lazy__card-head">
+        <TypeBadge type="Item" />
+        <span className="stac-lazy__card-title">{title}</span>
+        <code className="stac-id">{stac.id}</code>
+      </div>
+      {datetime && (
+        <p className="stac-lazy__card-datetime">{datetime}</p>
+      )}
+      <PropertiesTable properties={properties} />
+      <AssetList assets={stac.assets} />
+      <FootprintText bbox={stacBbox(stac)} />
+      <a href={child.href} className="stac-lazy__card-source">
+        <Translate id="stac.lazy.source">Source JSON</Translate>
+      </a>
+    </div>
+  );
+}
+
+export function KeyValueTable({
+  entries,
+  caption,
+}: {
+  entries: [string, unknown][];
+  caption?: string;
+}): React.JSX.Element | null {
+  const rows = entries.filter(([, v]) => v !== undefined);
+  if (rows.length === 0) return null;
+  return (
+    <table className="stac-kv">
+      {caption && <caption className="stac-kv__caption">{caption}</caption>}
+      <tbody>
+        {rows.map(([k, v]) => (
+          <tr key={k}>
+            <th scope="row" className="stac-kv__key">
+              {k}
+            </th>
+            <td className="stac-kv__value">{formatValue(v)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/**
+ * Like KeyValueTable, but resolves labels and value formatting through the
+ * extension-aware field registry (stac-fields-lite).
+ */
+export function PropertiesTable({
+  properties,
+  caption,
+}: {
+  properties: Record<string, unknown>;
+  caption?: string;
+}): React.JSX.Element | null {
+  const keys = Object.keys(properties);
+  if (keys.length === 0) return null;
+  return (
+    <table className="stac-kv">
+      {caption && <caption className="stac-kv__caption">{caption}</caption>}
+      <tbody>
+        {keys.map((key) => (
+          <tr key={key}>
+            <th scope="row" className="stac-kv__key" title={key}>
+              {getFieldLabel(key)}
+            </th>
+            <td className="stac-kv__value">
+              {formatFieldValue(key, properties[key])}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+export function AssetList({
+  assets,
+}: {
+  assets: Record<string, StacAsset> | undefined;
+}): React.JSX.Element | null {
+  const entries = Object.entries(assets ?? {});
+  if (entries.length === 0) return null;
+  return (
+    <div className="stac-assets">
+      <h2 className="stac-section-title">
+        <Translate id="stac.assets.title">Assets</Translate>
+      </h2>
+      <ul className="stac-assets__list">
+        {entries.map(([key, asset]) => (
+          <li key={key} className="stac-assets__item">
+            <a href={asset.href} className="stac-assets__link">
+              {asset.title ?? key}
+            </a>
+            {asset.type && (
+              <span className="stac-assets__type">{asset.type}</span>
+            )}
+            {Array.isArray(asset.roles) && asset.roles.length > 0 && (
+              <span className="stac-assets__roles">
+                {asset.roles.join(', ')}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Text-only footprint, used when the map is disabled or unavailable. */
+export function FootprintText({
+  bbox,
+}: {
+  bbox: number[] | undefined;
+}): React.JSX.Element {
+  if (!bbox) {
+    return (
+      <p className="stac-empty">
+        <Translate id="stac.footprint.none">
+          No spatial footprint available.
+        </Translate>
+      </p>
+    );
+  }
+  const [w, s, e, n] = bbox;
+  return (
+    <table className="stac-kv">
+      <tbody>
+        <tr>
+          <th scope="row" className="stac-kv__key">
+            <Translate id="stac.footprint.bbox">Bounding box</Translate>
+          </th>
+          <td className="stac-kv__value">
+            W {w}, S {s}, E {e}, N {n}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}

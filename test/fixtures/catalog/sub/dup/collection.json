@@ -1,0 +1,13 @@
+{
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "id": "dup-collection",
+  "title": "Dup Collection 1",
+  "extent": {
+    "spatial": {"bbox": [[-10, -10, 10, 10]]},
+    "temporal": {"interval": [["2019-01-01T00:00:00Z", null]]}
+  },
+  "links": [
+    {"rel": "item", "href": "deep-item.json"}
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "stac_version": "0.8.1",
+  "id": "S2-SJ-20210610",
+  "bbox": [-121.95, 37.30, -121.85, 37.38],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [-121.95, 37.30],
+        [-121.85, 37.30],
+        [-121.85, 37.38],
+        [-121.95, 37.38],
+        [-121.95, 37.30]
+      ]
+    ]
+  },
+  "properties": {
+    "datetime": "2021-06-10T18:46:00Z",
+    "eo:cloud_cover": 12.9,
+    "eo:platform": "sentinel-2a"
+  },
+  "assets": {
+    "visual": {
+      "href": "https://example.com/data/S2-SJ-20210610-visual.tif",
+      "title": "True color image"
+    }
+  },
+  "links": [
+    {"rel": "root", "href": "../catalog.json"},
+    {"rel": "parent", "href": "./collection.json"},
+    {"rel": "self", "href": "./item-sanjose.json"}
+  ]
+}

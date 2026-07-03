@@ -1,0 +1,40 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "id": "S2-OAK-20210615",
+  "collection": "sentinel-2-sample",
+  "bbox": [-122.34, 37.72, -122.14, 37.85],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [-122.34, 37.72],
+        [-122.14, 37.72],
+        [-122.14, 37.85],
+        [-122.34, 37.85],
+        [-122.34, 37.72]
+      ]
+    ]
+  },
+  "properties": {
+    "datetime": "2021-06-15T18:45:00Z",
+    "platform": "sentinel-2a",
+    "instruments": ["msi"],
+    "eo:cloud_cover": 8.7,
+    "gsd": 10
+  },
+  "assets": {
+    "visual": {
+      "href": "https://example.com/data/S2-OAK-20210615-visual.tif",
+      "title": "True color image",
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": ["visual"]
+    }
+  },
+  "links": [
+    {"rel": "root", "href": "../catalog.json", "type": "application/json"},
+    {"rel": "parent", "href": "./collection.json", "type": "application/json"},
+    {"rel": "collection", "href": "./collection.json", "type": "application/json"},
+    {"rel": "self", "href": "./item-oakland.json", "type": "application/geo+json"}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "stac_version": "0.8.1",
+  "id": "collection-a",
+  "title": "Collection A (legacy)",
+  "description": "Legacy collection with flat extent and no type field.",
+  "license": "CC-BY-4.0",
+  "keywords": ["fixture", "legacy"],
+  "extent": {
+    "spatial": [-122.5, 37.7, -122.3, 37.9],
+    "temporal": ["2020-01-01T00:00:00Z", "2020-12-31T00:00:00Z"]
+  },
+  "providers": [{"name": "Fixture Provider", "roles": ["producer"]}],
+  "links": [
+    {"rel": "item", "href": "item-3d.json"},
+    {"rel": "item", "href": "item-point.json"},
+    {"rel": "child", "href": "../catalog.json"}
+  ]
+}

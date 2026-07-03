@@ -1,0 +1,281 @@
+/* docusaurus-plugin-stac — shared styles (global client module). */
+
+.stac-page {
+  max-width: 960px;
+}
+
+.stac-breadcrumbs {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-breadcrumbs__sep {
+  margin: 0 0.4rem;
+  opacity: 0.6;
+}
+.stac-breadcrumbs__current {
+  color: var(--ifm-color-emphasis-900);
+  font-weight: 600;
+}
+
+.stac-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+.stac-title {
+  margin: 0;
+}
+.stac-id {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-collection-ref {
+  font-size: 0.85rem;
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-description {
+  color: var(--ifm-color-emphasis-800);
+}
+
+.stac-section-title {
+  margin-top: 2rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-300);
+  padding-bottom: 0.3rem;
+}
+
+/* Type badges */
+.stac-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.4rem;
+  color: #fff;
+  vertical-align: middle;
+}
+.stac-badge--catalog {
+  background: #6b7280;
+}
+.stac-badge--collection {
+  background: #2563eb;
+}
+.stac-badge--item {
+  background: #059669;
+}
+
+/* Child list */
+.stac-child-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+.stac-child-list__link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.stac-child-list__link:hover {
+  background: var(--ifm-color-emphasis-100);
+  border-color: var(--ifm-color-emphasis-500);
+}
+.stac-child-list__title {
+  font-weight: 500;
+}
+
+/* Key/value table */
+.stac-kv {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  display: table;
+}
+.stac-kv__caption {
+  text-align: left;
+  font-weight: 700;
+  padding-bottom: 0.4rem;
+}
+.stac-kv__key {
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+  padding: 0.35rem 1rem 0.35rem 0;
+  color: var(--ifm-color-emphasis-700);
+  font-weight: 600;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+.stac-kv__value {
+  padding: 0.35rem 0;
+  word-break: break-word;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+/* Assets */
+.stac-assets__list {
+  list-style: none;
+  padding: 0;
+}
+.stac-assets__item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+}
+.stac-assets__type,
+.stac-assets__roles {
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-600);
+}
+
+/* Map */
+.stac-map-section {
+  margin: 1.5rem 0;
+}
+.stac-map {
+  width: 100%;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  border: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.stac-empty {
+  color: var(--ifm-color-emphasis-600);
+  font-style: italic;
+}
+.stac-parent-link {
+  margin-top: 2rem;
+}
+
+/* Search */
+.stac-search {
+  margin: 1rem 0 1.5rem;
+}
+.stac-search__input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.5rem;
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+}
+.stac-search__results {
+  margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.5rem;
+  background: var(--ifm-color-emphasis-100);
+}
+.stac-search__count {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-search__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+.stac-search__link {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.4rem;
+  text-decoration: none;
+  background: var(--ifm-background-color);
+}
+.stac-search__link:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+
+/* Pagination */
+.stac-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.stac-pagination__btn {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.4rem;
+  background: var(--ifm-background-color);
+  color: var(--ifm-font-color-base);
+  cursor: pointer;
+}
+.stac-pagination__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.stac-pagination__status {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+
+/* Lazy (load-on-demand) items — not crawlable, fetched client-side. */
+.stac-lazy {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--ifm-color-emphasis-300);
+}
+.stac-lazy__note {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+  font-style: italic;
+}
+.stac-lazy__list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.stac-lazy__card {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--ifm-background-surface-color);
+}
+.stac-lazy__card--loading,
+.stac-lazy__card--error {
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-lazy__card--error .stac-lazy__card-error {
+  display: block;
+  color: var(--ifm-color-danger);
+  font-size: 0.9rem;
+}
+.stac-lazy__card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.stac-lazy__card-title {
+  font-weight: 600;
+}
+.stac-lazy__card-datetime {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-lazy__card-source {
+  font-size: 0.85rem;
+}

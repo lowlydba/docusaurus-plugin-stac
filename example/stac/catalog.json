@@ -1,0 +1,12 @@
+{
+  "type": "Catalog",
+  "stac_version": "1.0.0",
+  "id": "demo-catalog",
+  "title": "Demo STAC Catalog",
+  "description": "A tiny sample catalog used to exercise docusaurus-plugin-stac.",
+  "links": [
+    {"rel": "root", "href": "./catalog.json", "type": "application/json"},
+    {"rel": "self", "href": "./catalog.json", "type": "application/json"},
+    {"rel": "child", "href": "./sentinel-2/collection.json", "type": "application/json", "title": "Sentinel-2 Sample"}
+  ]
+}
