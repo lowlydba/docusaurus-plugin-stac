@@ -1,16 +1,43 @@
-/* docusaurus-plugin-stac — shared styles (global client module). */
-
+/* docusaurus-plugin-stac — shared styles (global client module).
+ *
+ * Design tokens keep the generated pages visually consistent: a single set of
+ * radii, spacing steps, surface/border colors and a small badge palette are
+ * defined here and reused by every component below. This avoids the "scattering
+ * of pill shapes/sizes/colors" that creeps in when each block invents its own
+ * values. All tokens derive from Infima (`--ifm-*`) variables so they adapt to
+ * light/dark themes automatically. */
 .stac-page {
   max-width: 960px;
+
+  /* Corner radii — one small step for chips/controls, one for cards/surfaces. */
+  --stac-radius-pill: 999px;
+  --stac-radius-sm: 6px;
+  --stac-radius-md: 10px;
+
+  /* Vertical rhythm. */
+  --stac-gap-xs: 0.4rem;
+  --stac-gap-sm: 0.6rem;
+  --stac-gap-md: 1rem;
+  --stac-gap-lg: 2rem;
+
+  /* Shared surface + border treatment for cards, inputs and tables. */
+  --stac-border-color: var(--ifm-color-emphasis-300);
+  --stac-surface: var(--ifm-background-surface-color);
+  --stac-surface-muted: var(--ifm-color-emphasis-100);
+
+  /* Semantic badge colors, one per node type. */
+  --stac-badge-catalog: #64748b;
+  --stac-badge-collection: #2563eb;
+  --stac-badge-item: #0d9488;
 }
 
 .stac-breadcrumbs {
   font-size: 0.9rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--stac-gap-md);
   color: var(--ifm-color-emphasis-700);
 }
 .stac-breadcrumbs__sep {
-  margin: 0 0.4rem;
+  margin: 0 var(--stac-gap-xs);
   opacity: 0.6;
 }
 .stac-breadcrumbs__current {
@@ -21,51 +48,72 @@
 .stac-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.6rem;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  gap: var(--stac-gap-sm);
+  margin-bottom: var(--stac-gap-sm);
 }
 .stac-title {
   margin: 0;
+  line-height: 1.2;
+}
+
+/* Neutral "chip" treatment shared by the id, collection reference and asset
+ * metadata (media type, roles). A single subtle, outlined pill keeps these
+ * secondary labels visually distinct from the colored type badges while
+ * remaining consistent with each other. */
+.stac-id,
+.stac-collection-ref,
+.stac-assets__type,
+.stac-assets__roles {
+  display: inline-block;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-pill);
+  background: var(--stac-surface-muted);
+  color: var(--ifm-color-emphasis-700);
+  vertical-align: middle;
+  white-space: nowrap;
 }
 .stac-id {
-  font-size: 0.85rem;
-  color: var(--ifm-color-emphasis-700);
+  font-family: var(--ifm-font-family-monospace);
 }
 .stac-collection-ref {
-  font-size: 0.85rem;
-  color: var(--ifm-color-emphasis-700);
+  white-space: normal;
 }
 .stac-description {
   color: var(--ifm-color-emphasis-800);
 }
 
 .stac-section-title {
-  margin-top: 2rem;
-  border-bottom: 1px solid var(--ifm-color-emphasis-300);
+  margin-top: var(--stac-gap-lg);
+  border-bottom: 1px solid var(--stac-border-color);
   padding-bottom: 0.3rem;
 }
 
-/* Type badges */
+/* Type badges — the single colored pill system, one hue per node type. */
 .stac-badge {
-  display: inline-block;
-  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
   font-weight: 700;
+  line-height: 1.4;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.1rem 0.45rem;
-  border-radius: 0.4rem;
+  letter-spacing: 0.04em;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--stac-radius-pill);
   color: #fff;
   vertical-align: middle;
 }
 .stac-badge--catalog {
-  background: #6b7280;
+  background: var(--stac-badge-catalog);
 }
 .stac-badge--collection {
-  background: #2563eb;
+  background: var(--stac-badge-collection);
 }
 .stac-badge--item {
-  background: #059669;
+  background: var(--stac-badge-item);
 }
 
 /* Child list */
@@ -74,68 +122,95 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 0.4rem;
+  gap: var(--stac-gap-xs);
 }
 .stac-child-list__link {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--stac-gap-sm);
   padding: 0.6rem 0.8rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 0.5rem;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-md);
+  background: var(--stac-surface);
   text-decoration: none;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .stac-child-list__link:hover {
-  background: var(--ifm-color-emphasis-100);
+  background: var(--stac-surface-muted);
   border-color: var(--ifm-color-emphasis-500);
 }
 .stac-child-list__title {
   font-weight: 500;
 }
 
-/* Key/value table */
+/* Key/value table — a self-contained, rounded surface with consistent cell
+ * padding. We reset Infima's default table borders/striping so the key and
+ * value columns line up cleanly and never sit flush against a divider. */
 .stac-kv {
   width: 100%;
-  border-collapse: collapse;
-  margin: 1rem 0;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: var(--stac-gap-md) 0;
   display: table;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-md);
+  overflow: hidden;
+  font-size: 0.92rem;
 }
 .stac-kv__caption {
+  caption-side: top;
   text-align: left;
   font-weight: 700;
-  padding-bottom: 0.4rem;
+  padding-bottom: var(--stac-gap-xs);
 }
+.stac-kv th,
+.stac-kv td {
+  padding: 0.55rem 0.9rem;
+  border: none;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+.stac-kv tr:last-child th,
+.stac-kv tr:last-child td {
+  border-bottom: none;
+}
+/* Explicit cell backgrounds override Infima's default per-row striping so the
+ * key/value columns read as two clean, consistent bands. */
 .stac-kv__key {
   text-align: left;
   vertical-align: top;
   white-space: nowrap;
-  padding: 0.35rem 1rem 0.35rem 0;
-  color: var(--ifm-color-emphasis-700);
+  width: 1%;
+  color: var(--ifm-color-emphasis-800);
   font-weight: 600;
-  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  background: var(--stac-surface-muted);
 }
 .stac-kv__value {
-  padding: 0.35rem 0;
+  vertical-align: top;
   word-break: break-word;
-  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  color: var(--ifm-color-emphasis-900);
+  background: var(--ifm-background-color);
 }
 
 /* Assets */
 .stac-assets__list {
   list-style: none;
   padding: 0;
+  margin: var(--stac-gap-md) 0 0;
+  display: grid;
+  gap: var(--stac-gap-xs);
 }
 .stac-assets__item {
   display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.3rem 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--stac-gap-sm);
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-md);
+  background: var(--stac-surface);
 }
-.stac-assets__type,
-.stac-assets__roles {
-  font-size: 0.8rem;
-  color: var(--ifm-color-emphasis-600);
+.stac-assets__link {
+  font-weight: 500;
 }
 
 /* Map */
@@ -144,9 +219,9 @@
 }
 .stac-map {
   width: 100%;
-  border-radius: 0.6rem;
+  border-radius: var(--stac-radius-md);
   overflow: hidden;
-  border: 1px solid var(--ifm-color-emphasis-300);
+  border: 1px solid var(--stac-border-color);
 }
 
 .stac-empty {
@@ -154,28 +229,34 @@
   font-style: italic;
 }
 .stac-parent-link {
-  margin-top: 2rem;
+  margin-top: var(--stac-gap-lg);
 }
 
 /* Search */
 .stac-search {
-  margin: 1rem 0 1.5rem;
+  margin: var(--stac-gap-md) 0 1.5rem;
 }
 .stac-search__input {
   width: 100%;
   padding: 0.6rem 0.8rem;
   font-size: 1rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 0.5rem;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-md);
   background: var(--ifm-background-color);
   color: var(--ifm-font-color-base);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.stac-search__input:focus {
+  outline: none;
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 0 0 3px var(--ifm-color-primary-lightest);
 }
 .stac-search__results {
-  margin-top: 0.6rem;
+  margin-top: var(--stac-gap-sm);
   padding: 0.6rem 0.8rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 0.5rem;
-  background: var(--ifm-color-emphasis-100);
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-md);
+  background: var(--stac-surface);
 }
 .stac-search__count {
   margin: 0 0 0.5rem;
@@ -187,19 +268,19 @@
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 0.3rem;
+  gap: 0.2rem;
 }
 .stac-search__link {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: var(--stac-gap-sm);
   padding: 0.4rem 0.6rem;
-  border-radius: 0.4rem;
+  border-radius: var(--stac-radius-sm);
   text-decoration: none;
-  background: var(--ifm-background-color);
+  transition: background 0.15s ease;
 }
 .stac-search__link:hover {
-  background: var(--ifm-color-emphasis-200);
+  background: var(--stac-surface-muted);
 }
 
 /* Pagination */
@@ -207,16 +288,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: var(--stac-gap-md);
+  margin-top: var(--stac-gap-md);
 }
 .stac-pagination__btn {
-  padding: 0.35rem 0.9rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
-  border-radius: 0.4rem;
-  background: var(--ifm-background-color);
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-sm);
+  background: var(--stac-surface);
   color: var(--ifm-font-color-base);
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.stac-pagination__btn:hover:not(:disabled) {
+  background: var(--stac-surface-muted);
+  border-color: var(--ifm-color-emphasis-500);
 }
 .stac-pagination__btn:disabled {
   opacity: 0.5;
@@ -231,8 +317,8 @@
 /* Lazy (load-on-demand) items — not crawlable, fetched client-side. */
 .stac-lazy {
   margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px dashed var(--ifm-color-emphasis-300);
+  padding-top: var(--stac-gap-md);
+  border-top: 1px dashed var(--stac-border-color);
 }
 .stac-lazy__note {
   font-size: 0.9rem;
@@ -242,16 +328,16 @@
 .stac-lazy__list {
   list-style: none;
   padding: 0;
-  margin: 0 0 1rem;
+  margin: 0 0 var(--stac-gap-md);
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--stac-gap-md);
 }
 .stac-lazy__card {
-  border: 1px solid var(--ifm-color-emphasis-200);
-  border-radius: 0.5rem;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-md);
   padding: 0.75rem 1rem;
-  background: var(--ifm-background-surface-color);
+  background: var(--stac-surface);
 }
 .stac-lazy__card--loading,
 .stac-lazy__card--error {
