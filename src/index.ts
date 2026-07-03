@@ -63,7 +63,10 @@ export default function pluginStac(
 
       // Throttled progress: for large or remote catalogs the crawl can run for
       // minutes with no output, which looks like a hang. Emit a heartbeat at
-      // most every ~1.5s (and never for tiny local catalogs that finish first).
+      // most every 5s (and never for tiny local catalogs that finish first).
+      // Each heartbeat reports the running elapsed time and crawl rate so a
+      // long build reads as steady progress rather than a stall.
+      const PROGRESS_INTERVAL_MS = 5000;
       let lastLoggedAt = startedAt;
       let lastLoggedCount = 0;
 
@@ -74,8 +77,13 @@ export default function pluginStac(
         onNode: ({count, remote}) => {
           if (!remote) return;
           const now = Date.now();
-          if (now - lastLoggedAt >= 1500 && count > lastLoggedCount) {
-            log(`  …crawled ${count} nodes so far`);
+          if (now - lastLoggedAt >= PROGRESS_INTERVAL_MS && count > lastLoggedCount) {
+            const seconds = (now - startedAt) / 1000;
+            const rate = (count / seconds).toFixed(1);
+            log(
+              `  …crawled ${count} nodes so far ` +
+                `(${seconds.toFixed(0)}s elapsed, ${rate} nodes/s)`,
+            );
             lastLoggedAt = now;
             lastLoggedCount = count;
           }
