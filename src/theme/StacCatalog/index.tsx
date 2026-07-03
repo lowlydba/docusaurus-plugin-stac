@@ -9,10 +9,9 @@ import {
   LazyChildList,
   SourceJsonLink,
   StacHead,
-  TypeBadge,
 } from '../StacCommon/index.js';
+import {PageHeader, PageShell} from '../StacCommon/PageLayout.js';
 import StacSearch from '../StacSearch/index.js';
-import StacSidebar from '../StacSidebar/index.js';
 
 export default function StacCatalog({
   data,
@@ -27,38 +26,25 @@ export default function StacCatalog({
   return (
     <Layout title={node.title} description={stac.description}>
       <StacHead jsonHref={jsonHref} jsonLd={jsonLd} />
-      <div className={sidebarEnabled ? 'container margin-vert--lg stac-shell' : undefined}>
-        {sidebarEnabled && <StacSidebar activeRoutePath={node.routePath} />}
-        <main
-          className={
-            sidebarEnabled ? 'stac-page stac-shell__main' : 'container margin-vert--lg stac-page'
-          }
-        >
-          <Breadcrumbs node={node} routeBasePath={routeBasePath} rootTitle={node.title} />
-          <header className="stac-header">
-            <TypeBadge type={node.type} />
-            <h1 className="stac-title">{node.title}</h1>
-            {node.id !== node.title && (
-              <code className="stac-id">{node.id}</code>
-            )}
-          </header>
-          <SourceJsonLink jsonHref={jsonHref} />
-          {stac.description && <p className="stac-description">{stac.description}</p>}
+      <PageShell sidebarEnabled={sidebarEnabled} activeRoutePath={node.routePath}>
+        <Breadcrumbs node={node} routeBasePath={routeBasePath} rootTitle={node.title} />
+        <PageHeader node={node} />
+        <SourceJsonLink jsonHref={jsonHref} />
+        {stac.description && <p className="stac-description">{stac.description}</p>}
 
-          {isRoot && searchEnabled && <StacSearch pluginId="default" />}
+        {isRoot && searchEnabled && <StacSearch pluginId="default" />}
 
-          <h2 className="stac-section-title">
-            <Translate
-              id="stac.catalog.contents"
-              values={{count: node.children.length}}
-            >
-              {'Contents ({count})'}
-            </Translate>
-          </h2>
-          <ChildList children={node.children} itemsPerPage={itemsPerPage} />
-          <LazyChildList lazyChildren={node.lazyChildren} batchSize={itemsPerPage} />
-        </main>
-      </div>
+        <h2 className="stac-section-title">
+          <Translate
+            id="stac.catalog.contents"
+            values={{count: node.children.length}}
+          >
+            {'Contents ({count})'}
+          </Translate>
+        </h2>
+        <ChildList children={node.children} itemsPerPage={itemsPerPage} />
+        <LazyChildList lazyChildren={node.lazyChildren} batchSize={itemsPerPage} />
+      </PageShell>
     </Layout>
   );
 }

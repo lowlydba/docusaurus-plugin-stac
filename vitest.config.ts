@@ -52,6 +52,10 @@ export default defineConfig({
         find: '@docusaurus/useGlobalData',
         replacement: stub('test/mocks/useGlobalData.tsx'),
       },
+      {
+        find: '@theme-init/NotFound/Content',
+        replacement: stub('test/mocks/NotFoundContent.tsx'),
+      },
     ],
   },
   test: {

@@ -149,7 +149,7 @@ jobs:
 
   are-we-good:
     name: CI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: [build, test, e2e, zizmor]
     if: always()
     permissions: {}

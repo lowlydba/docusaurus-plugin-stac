@@ -124,7 +124,7 @@ describe('walkCatalog (latest-release alias)', () => {
   const releasesRoot = path.resolve(dir, '../fixtures/releases/catalog.json');
 
   it('mirrors the child link flagged latest:true under a sibling /latest route', async () => {
-    const {nodes} = await walkCatalog(releasesRoot, {
+    const {root, nodes} = await walkCatalog(releasesRoot, {
       routeBasePath: '/stac',
       maxDepth: Number.POSITIVE_INFINITY,
     });
@@ -144,6 +144,7 @@ describe('walkCatalog (latest-release alias)', () => {
     );
     expect(aliasRoot).toBeDefined();
     expect(aliasRoot?.parentRoutePath).toBe('/stac');
+    expect(aliasRoot?.isLatestAlias).toBe(true);
     expect(aliasRoot?.children).toEqual([
       expect.objectContaining({id: 'addresses', routePath: '/stac/latest/addresses'}),
     ]);
@@ -153,6 +154,7 @@ describe('walkCatalog (latest-release alias)', () => {
     );
     expect(aliasCollection).toBeDefined();
     expect(aliasCollection?.parentRoutePath).toBe('/stac/latest');
+    expect(aliasCollection?.isLatestAlias).toBe(true);
     // The 2024-01-01 release (not flagged latest) is not duplicated.
     expect(nodes.filter((n) => n.id === '2024-01-01')).toHaveLength(1);
 
@@ -160,6 +162,20 @@ describe('walkCatalog (latest-release alias)', () => {
     // so the same STAC ids only ever appear twice (real + alias), never more.
     expect(nodes.filter((n) => n.id === 'addresses')).toHaveLength(2);
     expect(nodes.filter((n) => n.id === '2024-02-01')).toHaveLength(2);
+
+    // The alias is discoverable: the root lists it as a child alongside the
+    // real dated releases, flagged so the UI can mark it a moving target.
+    expect(root.children).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({id: '2024-01-01', routePath: '/stac/2024-01-01'}),
+        expect.objectContaining({id: '2024-02-01', routePath: '/stac/2024-02-01'}),
+        expect.objectContaining({
+          id: '2024-02-01',
+          routePath: '/stac/latest',
+          isLatestAlias: true,
+        }),
+      ]),
+    );
   });
 
   it('skips aliasing when a real "latest" route already exists at that level', async () => {
@@ -174,6 +190,70 @@ describe('walkCatalog (latest-release alias)', () => {
     // At maxDepth 0 only the root is crawled, so no "latest" child is ever
     // visited/flagged — no alias should be produced.
     expect(nodes1.some((n) => n.routePath === '/stac/latest')).toBe(false);
+  });
+
+  it('prefers the stable id over a self-reported "latest" title on the dated release, reserving the friendly label for the alias', async () => {
+    // Regression guard for sources (e.g. Overture) that bake the moving-target
+    // label directly into the current release's own `title`, which would
+    // otherwise show up — confusingly — on the fixed, permanent dated page.
+    const docs: Record<string, unknown> = {
+      'https://cat.test/catalog.json': {
+        type: 'Catalog',
+        id: 'releases-root',
+        links: [
+          {
+            rel: 'child',
+            href: '2024-03-01/catalog.json',
+            title: 'Latest release',
+            latest: true,
+          },
+        ],
+      },
+      'https://cat.test/2024-03-01/catalog.json': {
+        type: 'Catalog',
+        id: '2024-03-01',
+        title: 'Latest release',
+        links: [],
+      },
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => ({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: async () => JSON.stringify(docs[url]),
+      })),
+    );
+
+    const {root, nodes} = await walkCatalog('https://cat.test/catalog.json', {
+      routeBasePath: '/stac',
+      maxDepth: Number.POSITIVE_INFINITY,
+    });
+    vi.unstubAllGlobals();
+
+    // The dated, permanent page shows its stable id, not the moving label.
+    const dated = nodes.find((n) => n.routePath === '/stac/2024-03-01');
+    expect(dated?.title).toBe('2024-03-01');
+
+    // The /latest alias keeps the friendly, moving-target label.
+    const alias = nodes.find((n) => n.routePath === '/stac/latest');
+    expect(alias?.title).toBe('Latest release');
+    expect(alias?.isLatestAlias).toBe(true);
+
+    expect(root.children).toEqual([
+      expect.objectContaining({
+        id: '2024-03-01',
+        routePath: '/stac/2024-03-01',
+        title: '2024-03-01',
+      }),
+      expect.objectContaining({
+        id: '2024-03-01',
+        routePath: '/stac/latest',
+        title: 'Latest release',
+        isLatestAlias: true,
+      }),
+    ]);
   });
 });
 

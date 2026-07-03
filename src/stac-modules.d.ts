@@ -64,3 +64,11 @@ declare module '@theme/Layout' {
   }
   export default function Layout(props: Props): ReactNode;
 }
+
+declare module '@theme-init/NotFound/Content' {
+  import type {ReactNode} from 'react';
+  export interface Props {
+    readonly className?: string;
+  }
+  export default function NotFoundContent(props: Props): ReactNode;
+}

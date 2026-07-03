@@ -17,6 +17,11 @@ import {
   hasFieldFormatter,
 } from '../../fields/registry.js';
 import {JsonBlock} from './JsonBlock.js';
+import {CopyLinkButton} from './CopyButton.js';
+import {StorageSchemesValue} from './StorageSchemes.js';
+import {isPlainObject} from '../../utils.js';
+
+export {CopyLinkButton} from './CopyButton.js';
 
 // ---------------------------------------------------------------------------
 // Formatting helpers
@@ -36,9 +41,7 @@ export function formatValue(value: unknown): string {
 }
 
 /** True for a non-null, non-array object — a nested structure best shown as JSON. */
-function isNestedObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
+const isNestedObject = isPlainObject;
 
 /** Best-effort bbox `[west, south, east, north]` from a GeoJSON geometry. */
 export function bboxFromGeometry(geometry: unknown): number[] | undefined {
@@ -136,47 +139,6 @@ function DownloadIcon({className}: {className?: string}): React.JSX.Element {
   );
 }
 
-function CopyIcon({className}: {className?: string}): React.JSX.Element {
-  return (
-    <svg
-      className={className}
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <rect x="9" y="9" width="11" height="11" rx="2" />
-      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
-    </svg>
-  );
-}
-
-function CheckIcon({className}: {className?: string}): React.JSX.Element {
-  return (
-    <svg
-      className={className}
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  );
-}
-
 /**
  * A link that makes it visually explicit it points at a downloadable file: it
  * carries a download icon and opens in a new tab. Used for STAC assets and the
@@ -204,71 +166,6 @@ export function DownloadLink({
       <DownloadIcon className="stac-download__icon" />
       {children}
     </a>
-  );
-}
-
-/**
- * A small button that copies a (resolved, absolute) link to the clipboard, so a
- * reader can grab the URL instead of triggering a download.
- */
-export function CopyLinkButton({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}): React.JSX.Element {
-  const [copied, setCopied] = useState(false);
-  const copiedLabel = translate({
-    id: 'stac.copyLink.copied',
-    message: 'Copied',
-    description: 'Confirmation shown after copying a download link',
-  });
-  const actionLabel = translate({
-    id: 'stac.copyLink.action',
-    message: 'Copy link',
-    description: 'Label for the button that copies a download link',
-  });
-
-  const onCopy = (): void => {
-    let text = href;
-    try {
-      if (typeof window !== 'undefined') {
-        text = new URL(href, window.location.href).href;
-      }
-    } catch {
-      /* fall back to the raw href */
-    }
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      navigator.clipboard
-        .writeText(text)
-        .then(() => {
-          setCopied(true);
-          window.setTimeout(() => setCopied(false), 1500);
-        })
-        .catch(() => {
-          /* clipboard unavailable — ignore */
-        });
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      className={`stac-copy${copied ? ' stac-copy--copied' : ''}`}
-      onClick={onCopy}
-      aria-label={label}
-      title={label}
-    >
-      {copied ? (
-        <CheckIcon className="stac-copy__icon" />
-      ) : (
-        <CopyIcon className="stac-copy__icon" />
-      )}
-      <span className="stac-copy__text" aria-hidden="true">
-        {copied ? copiedLabel : actionLabel}
-      </span>
-    </button>
   );
 }
 
@@ -338,6 +235,26 @@ export function TypeBadge({type}: {type: StacNode['type']}): React.JSX.Element {
   return <span className={`stac-badge ${TYPE_BADGE[type]}`}>{type}</span>;
 }
 
+/**
+ * Marks a page (or Contents/tree entry) as a moving alias — e.g. the `/latest`
+ * mirror of whichever dated release currently holds that title — rather than
+ * a fixed, permanent record. Distinct from `TypeBadge`, which conveys the
+ * STAC object kind, not its stability.
+ */
+export function LatestAliasPill(): React.JSX.Element {
+  return (
+    <span
+      className="stac-pill stac-pill--moving"
+      title={translate({
+        id: 'stac.latestAlias.tooltip',
+        message: 'Always points to the current release — not a fixed page.',
+      })}
+    >
+      <Translate id="stac.latestAlias.pill">Moving tag</Translate>
+    </span>
+  );
+}
+
 export function Breadcrumbs({
   node,
   routeBasePath,
@@ -377,9 +294,11 @@ function ChildLink({child}: {child: StacChildRef}): React.JSX.Element {
     <Link to={child.routePath} className="stac-child-list__link">
       <TypeBadge type={child.type} />
       <span className="stac-child-list__title">{child.title}</span>
+      {child.isLatestAlias && <LatestAliasPill />}
     </Link>
   );
 }
+
 
 /**
  * A crawlable, client-paginated list of child records. Every child is rendered
@@ -545,6 +464,31 @@ type LazyState =
   | {status: 'error'; message: string}
   | {status: 'loaded'; stac: StacObject};
 
+/** The "Source JSON" download + copy-link pair shown on every lazy item card. */
+function LazyCardSourceJson({href}: {href: string}): React.JSX.Element {
+  return (
+    <span className="stac-download stac-download--inline">
+      <DownloadLink
+        href={href}
+        className="stac-lazy__card-source"
+        label={translate({
+          id: 'stac.lazy.sourceDownload',
+          message: 'Download source JSON',
+        })}
+      >
+        <Translate id="stac.lazy.source">Source JSON</Translate>
+      </DownloadLink>
+      <CopyLinkButton
+        href={href}
+        label={translate({
+          id: 'stac.lazy.sourceCopy',
+          message: 'Copy link to source JSON',
+        })}
+      />
+    </span>
+  );
+}
+
 function LazyItemCard({
   child,
   state,
@@ -573,25 +517,7 @@ function LazyItemCard({
             {'Could not load: {message}'}
           </Translate>
         </span>{' '}
-        <span className="stac-download stac-download--inline">
-          <DownloadLink
-            href={child.href}
-            className="stac-lazy__card-source"
-            label={translate({
-              id: 'stac.lazy.sourceDownload',
-              message: 'Download source JSON',
-            })}
-          >
-            <Translate id="stac.lazy.source">Source JSON</Translate>
-          </DownloadLink>
-          <CopyLinkButton
-            href={child.href}
-            label={translate({
-              id: 'stac.lazy.sourceCopy',
-              message: 'Copy link to source JSON',
-            })}
-          />
-        </span>
+        <LazyCardSourceJson href={child.href} />
       </div>
     );
   }
@@ -619,25 +545,7 @@ function LazyItemCard({
       <PropertiesTable properties={properties} />
       <AssetList assets={stac.assets} />
       <FootprintText bbox={stacBbox(stac)} />
-      <span className="stac-download stac-download--inline">
-        <DownloadLink
-          href={child.href}
-          className="stac-lazy__card-source"
-          label={translate({
-            id: 'stac.lazy.sourceDownload',
-            message: 'Download source JSON',
-          })}
-        >
-          <Translate id="stac.lazy.source">Source JSON</Translate>
-        </DownloadLink>
-        <CopyLinkButton
-          href={child.href}
-          label={translate({
-            id: 'stac.lazy.sourceCopy',
-            message: 'Copy link to source JSON',
-          })}
-        />
-      </span>
+      <LazyCardSourceJson href={child.href} />
     </div>
   );
 }
@@ -693,7 +601,11 @@ export function PropertiesTable({
               {getFieldLabel(key)}
             </th>
             <td className="stac-kv__value">
-              {isNestedObject(properties[key]) && !hasFieldFormatter(key) ? (
+              {key === 'storage:schemes' && isNestedObject(properties[key]) ? (
+                <StorageSchemesValue
+                  value={properties[key] as Record<string, unknown>}
+                />
+              ) : isNestedObject(properties[key]) && !hasFieldFormatter(key) ? (
                 <JsonBlock value={properties[key]} />
               ) : (
                 formatFieldValue(key, properties[key])
