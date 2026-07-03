@@ -4,6 +4,7 @@ import Translate, {translate} from '@docusaurus/Translate';
 import {JsonBlock} from './JsonBlock.js';
 import {CopyTextButton} from './CopyButton.js';
 import {ProviderIcon, type StorageProviderKind} from './ProviderIcons.js';
+import {isPlainObject} from '../../utils.js';
 
 const PLACEHOLDER_RE = /\{([^{}\s]+)\}/g;
 
@@ -27,9 +28,6 @@ export function resolvePlatformUri(
   });
 }
 
-function isSchemeObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 /**
  * Best-effort detection of which major cloud provider a storage scheme
@@ -75,7 +73,7 @@ export function StorageSchemesValue({
   const schemes = Object.entries(value).filter((entry): entry is [
     string,
     Record<string, unknown>,
-  ] => isSchemeObject(entry[1]));
+  ] => isPlainObject(entry[1]));
 
   return (
     <div className="stac-storage-schemes">

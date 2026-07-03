@@ -12,10 +12,7 @@
  *    ([w,s,minz,e,n,maxz]) appear alongside 2D ones.
  */
 import type {StacExtent, StacNodeType, StacObject} from './types.js';
-
-function isPlainObject(v: unknown): v is Record<string, unknown> {
-  return typeof v === 'object' && v !== null && !Array.isArray(v);
-}
+import {isPlainObject} from './utils.js';
 
 /** Normalize a Collection `extent` from any known historical shape. */
 export function normalizeExtent(extent: unknown): StacExtent | undefined {

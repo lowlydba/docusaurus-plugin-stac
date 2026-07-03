@@ -17,8 +17,11 @@ import {
   hasFieldFormatter,
 } from '../../fields/registry.js';
 import {JsonBlock} from './JsonBlock.js';
-import {CheckIcon, CopyIcon} from './CopyButton.js';
+import {CopyLinkButton} from './CopyButton.js';
 import {StorageSchemesValue} from './StorageSchemes.js';
+import {isPlainObject} from '../../utils.js';
+
+export {CopyLinkButton} from './CopyButton.js';
 
 // ---------------------------------------------------------------------------
 // Formatting helpers
@@ -38,9 +41,7 @@ export function formatValue(value: unknown): string {
 }
 
 /** True for a non-null, non-array object — a nested structure best shown as JSON. */
-function isNestedObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
+const isNestedObject = isPlainObject;
 
 /** Best-effort bbox `[west, south, east, north]` from a GeoJSON geometry. */
 export function bboxFromGeometry(geometry: unknown): number[] | undefined {
@@ -165,71 +166,6 @@ export function DownloadLink({
       <DownloadIcon className="stac-download__icon" />
       {children}
     </a>
-  );
-}
-
-/**
- * A small button that copies a (resolved, absolute) link to the clipboard, so a
- * reader can grab the URL instead of triggering a download.
- */
-export function CopyLinkButton({
-  href,
-  label,
-}: {
-  href: string;
-  label: string;
-}): React.JSX.Element {
-  const [copied, setCopied] = useState(false);
-  const copiedLabel = translate({
-    id: 'stac.copyLink.copied',
-    message: 'Copied',
-    description: 'Confirmation shown after copying a download link',
-  });
-  const actionLabel = translate({
-    id: 'stac.copyLink.action',
-    message: 'Copy link',
-    description: 'Label for the button that copies a download link',
-  });
-
-  const onCopy = (): void => {
-    let text = href;
-    try {
-      if (typeof window !== 'undefined') {
-        text = new URL(href, window.location.href).href;
-      }
-    } catch {
-      /* fall back to the raw href */
-    }
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      navigator.clipboard
-        .writeText(text)
-        .then(() => {
-          setCopied(true);
-          window.setTimeout(() => setCopied(false), 1500);
-        })
-        .catch(() => {
-          /* clipboard unavailable — ignore */
-        });
-    }
-  };
-
-  return (
-    <button
-      type="button"
-      className={`stac-copy${copied ? ' stac-copy--copied' : ''}`}
-      onClick={onCopy}
-      aria-label={label}
-      title={label}
-    >
-      {copied ? (
-        <CheckIcon className="stac-copy__icon" />
-      ) : (
-        <CopyIcon className="stac-copy__icon" />
-      )}
-      <span className="stac-copy__text" aria-hidden="true">
-        {copied ? copiedLabel : actionLabel}
-      </span>
-    </button>
   );
 }
 
@@ -528,6 +464,31 @@ type LazyState =
   | {status: 'error'; message: string}
   | {status: 'loaded'; stac: StacObject};
 
+/** The "Source JSON" download + copy-link pair shown on every lazy item card. */
+function LazyCardSourceJson({href}: {href: string}): React.JSX.Element {
+  return (
+    <span className="stac-download stac-download--inline">
+      <DownloadLink
+        href={href}
+        className="stac-lazy__card-source"
+        label={translate({
+          id: 'stac.lazy.sourceDownload',
+          message: 'Download source JSON',
+        })}
+      >
+        <Translate id="stac.lazy.source">Source JSON</Translate>
+      </DownloadLink>
+      <CopyLinkButton
+        href={href}
+        label={translate({
+          id: 'stac.lazy.sourceCopy',
+          message: 'Copy link to source JSON',
+        })}
+      />
+    </span>
+  );
+}
+
 function LazyItemCard({
   child,
   state,
@@ -556,25 +517,7 @@ function LazyItemCard({
             {'Could not load: {message}'}
           </Translate>
         </span>{' '}
-        <span className="stac-download stac-download--inline">
-          <DownloadLink
-            href={child.href}
-            className="stac-lazy__card-source"
-            label={translate({
-              id: 'stac.lazy.sourceDownload',
-              message: 'Download source JSON',
-            })}
-          >
-            <Translate id="stac.lazy.source">Source JSON</Translate>
-          </DownloadLink>
-          <CopyLinkButton
-            href={child.href}
-            label={translate({
-              id: 'stac.lazy.sourceCopy',
-              message: 'Copy link to source JSON',
-            })}
-          />
-        </span>
+        <LazyCardSourceJson href={child.href} />
       </div>
     );
   }
@@ -602,25 +545,7 @@ function LazyItemCard({
       <PropertiesTable properties={properties} />
       <AssetList assets={stac.assets} />
       <FootprintText bbox={stacBbox(stac)} />
-      <span className="stac-download stac-download--inline">
-        <DownloadLink
-          href={child.href}
-          className="stac-lazy__card-source"
-          label={translate({
-            id: 'stac.lazy.sourceDownload',
-            message: 'Download source JSON',
-          })}
-        >
-          <Translate id="stac.lazy.source">Source JSON</Translate>
-        </DownloadLink>
-        <CopyLinkButton
-          href={child.href}
-          label={translate({
-            id: 'stac.lazy.sourceCopy',
-            message: 'Copy link to source JSON',
-          })}
-        />
-      </span>
+      <LazyCardSourceJson href={child.href} />
     </div>
   );
 }

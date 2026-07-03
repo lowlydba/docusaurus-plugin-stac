@@ -8,6 +8,7 @@ import {walkCatalog} from './catalog-walker.js';
 import {normalizeOptions} from './options.js';
 import {buildNavTree, buildSearchIndex} from './nav.js';
 import {buildDataset} from './jsonld.js';
+import {isHttp} from './utils.js';
 import type {
   StacContent,
   StacGlobalData,
@@ -42,8 +43,8 @@ export default function pluginStac(
   rawOptions: StacPluginOptions,
 ): Plugin<StacContent> {
   const options = normalizeOptions(rawOptions);
-  const isHttp = /^https?:\/\//i.test(options.path);
-  const rootSource = isHttp
+  const rootIsHttp = isHttp(options.path);
+  const rootSource = rootIsHttp
     ? options.path
     : path.resolve(context.siteDir, options.path);
 
@@ -52,7 +53,7 @@ export default function pluginStac(
   // (link-rewritten) copy. Only http(s) sources are web-addressable; local
   // filesystem catalogs get no JSON link (serve them over http to enable it).
   const remoteJsonHref = (node: StacNode): string | undefined =>
-    /^https?:\/\//i.test(node.sourceHref) ? node.sourceHref : undefined;
+    isHttp(node.sourceHref) ? node.sourceHref : undefined;
 
   return {
     name: 'docusaurus-plugin-stac',

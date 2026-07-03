@@ -11,13 +11,10 @@ import type {
   StacObject,
 } from './types.js';
 import {normalizeStacObject} from './stac-normalize.js';
+import {isHttp} from './utils.js';
 
 const CHILD_RELS = new Set(['child']);
 const ITEM_RELS = new Set(['item']);
-
-function isHttp(href: string): boolean {
-  return /^https?:\/\//i.test(href);
-}
 
 /** Read + parse a STAC object from a local path or http(s) URL. */
 async function loadStac(source: string): Promise<StacObject> {

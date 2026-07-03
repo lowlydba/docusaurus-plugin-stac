@@ -43,37 +43,35 @@ export function CheckIcon({className}: {className?: string}): React.JSX.Element 
 }
 
 /**
- * A small button that copies an arbitrary piece of text to the clipboard.
- * Unlike `CopyLinkButton`, `text` is copied verbatim — it isn't resolved
- * against the current page URL — which is what's wanted for values like a
- * resolved storage-scheme URI rather than a same-site download link.
+ * The shared copy-to-clipboard button used by `CopyTextButton` and
+ * `CopyLinkButton`. `getText` is called lazily on click so callers can resolve
+ * the value against client-only state (e.g. the current page URL) that isn't
+ * available during SSR. Shows a transient "Copied" confirmation on success.
  */
-export function CopyTextButton({
-  text,
+export function CopyButton({
+  getText,
   label,
+  actionLabel,
 }: {
-  text: string;
+  getText: () => string;
   label: string;
+  actionLabel: string;
 }): React.JSX.Element {
   const [copied, setCopied] = useState(false);
-  const copiedLabel = translate({
-    id: 'stac.copyLink.copied',
-    message: 'Copied',
-    description: 'Confirmation shown after copying a value',
-  });
 
   const onCopy = (): void => {
-    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
-      navigator.clipboard
-        .writeText(text)
-        .then(() => {
-          setCopied(true);
-          window.setTimeout(() => setCopied(false), 1500);
-        })
-        .catch(() => {
-          /* clipboard unavailable — ignore */
-        });
-    }
+    const clipboard =
+      typeof navigator !== 'undefined' ? navigator.clipboard : undefined;
+    if (!clipboard?.writeText) return;
+    clipboard
+      .writeText(getText())
+      .then(() => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      })
+      .catch(() => {
+        /* clipboard unavailable — ignore */
+      });
   };
 
   return (
@@ -91,13 +89,72 @@ export function CopyTextButton({
       )}
       <span className="stac-copy__text" aria-hidden="true">
         {copied
-          ? copiedLabel
-          : translate({
-              id: 'stac.copyText.action',
-              message: 'Copy',
-              description: 'Label for a generic copy-value button',
-            })}
+          ? translate({
+              id: 'stac.copyLink.copied',
+              message: 'Copied',
+              description: 'Confirmation shown after copying a value',
+            })
+          : actionLabel}
       </span>
     </button>
+  );
+}
+
+/**
+ * Copies an arbitrary piece of text to the clipboard verbatim — it isn't
+ * resolved against the current page URL — which is what's wanted for values
+ * like a resolved storage-scheme URI rather than a same-site download link.
+ */
+export function CopyTextButton({
+  text,
+  label,
+}: {
+  text: string;
+  label: string;
+}): React.JSX.Element {
+  return (
+    <CopyButton
+      getText={() => text}
+      label={label}
+      actionLabel={translate({
+        id: 'stac.copyText.action',
+        message: 'Copy',
+        description: 'Label for a generic copy-value button',
+      })}
+    />
+  );
+}
+
+/**
+ * Copies a (resolved, absolute) link to the clipboard, so a reader can grab
+ * the URL instead of triggering a download. The href is resolved against the
+ * current page URL at click time.
+ */
+export function CopyLinkButton({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}): React.JSX.Element {
+  return (
+    <CopyButton
+      getText={() => {
+        try {
+          if (typeof window !== 'undefined') {
+            return new URL(href, window.location.href).href;
+          }
+        } catch {
+          /* fall back to the raw href */
+        }
+        return href;
+      }}
+      label={label}
+      actionLabel={translate({
+        id: 'stac.copyLink.action',
+        message: 'Copy link',
+        description: 'Label for the button that copies a download link',
+      })}
+    />
   );
 }
