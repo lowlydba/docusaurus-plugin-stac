@@ -74,7 +74,15 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright (builds plugin + example, then screenshots)
+      - name: Build plugin + example
+        # Explicit step rather than relying on the `pretest:e2e` npm pre-hook:
+        # sustainable-npm sets `ignore-scripts=true` globally, which (by
+        # design) also suppresses npm's pre/post script hooks, not just
+        # dependency install scripts. Locally, `npm run test:e2e` still
+        # builds automatically via that hook.
+        run: npm run build:example
+
+      - name: Run Playwright (screenshots)
         run: npm run test:e2e
 
       - name: Upload screenshots

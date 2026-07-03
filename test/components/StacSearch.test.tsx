@@ -38,6 +38,15 @@ describe('StacSearch', () => {
     expect(screen.queryByText('San Francisco')).not.toBeInTheDocument();
   });
 
+  it('shows a result count so results read distinctly from the Contents list', () => {
+    render(<StacSearch />);
+    const input = screen.getByPlaceholderText('Search the catalog…');
+    fireEvent.change(input, {target: {value: 'oak'}});
+    expect(
+      screen.getByText('1 result(s) from across the catalog'),
+    ).toBeInTheDocument();
+  });
+
   it('shows a no-results message', () => {
     render(<StacSearch />);
     const input = screen.getByPlaceholderText('Search the catalog…');

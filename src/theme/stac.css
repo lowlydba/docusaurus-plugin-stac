@@ -172,6 +172,15 @@
 }
 .stac-search__results {
   margin-top: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.5rem;
+  background: var(--ifm-color-emphasis-100);
+}
+.stac-search__count {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--ifm-color-emphasis-700);
 }
 .stac-search__list {
   list-style: none;
@@ -187,9 +196,10 @@
   padding: 0.4rem 0.6rem;
   border-radius: 0.4rem;
   text-decoration: none;
+  background: var(--ifm-background-color);
 }
 .stac-search__link:hover {
-  background: var(--ifm-color-emphasis-100);
+  background: var(--ifm-color-emphasis-200);
 }
 
 /* Pagination */

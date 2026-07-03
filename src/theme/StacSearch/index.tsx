@@ -52,16 +52,26 @@ export default function StacSearch({
               </Translate>
             </p>
           ) : (
-            <ul className="stac-search__list">
-              {results.map((r) => (
-                <li key={r.routePath} className="stac-search__item">
-                  <Link to={r.routePath} className="stac-search__link">
-                    <TypeBadge type={r.type} />
-                    <span className="stac-search__title">{r.title}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="stac-search__count">
+                <Translate
+                  id="stac.search.resultCount"
+                  values={{count: results.length}}
+                >
+                  {'{count} result(s) from across the catalog'}
+                </Translate>
+              </p>
+              <ul className="stac-search__list">
+                {results.map((r) => (
+                  <li key={r.routePath} className="stac-search__item">
+                    <Link to={r.routePath} className="stac-search__link">
+                      <TypeBadge type={r.type} />
+                      <span className="stac-search__title">{r.title}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </div>
       )}

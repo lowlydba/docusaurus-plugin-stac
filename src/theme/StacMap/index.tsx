@@ -19,6 +19,7 @@ function MapImpl({node, map}: StacMapProps): React.JSX.Element {
     if (!container) return undefined;
 
     let mapInstance: {remove: () => void} | undefined;
+    let resizeObserver: ResizeObserver | undefined;
     let cancelled = false;
 
     (async () => {
@@ -44,6 +45,15 @@ function MapImpl({node, map}: StacMapProps): React.JSX.Element {
       });
       mapInstance = instance;
       instance.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+      // MapLibre measures its container once at construction time. Docusaurus
+      // can still reflow the page after that (web fonts, hydration, sidebar
+      // toggles), which otherwise leaves the canvas sized for a stale layout
+      // and the footprint rendered off-center. Keep it in sync.
+      if (typeof ResizeObserver !== 'undefined') {
+        resizeObserver = new ResizeObserver(() => instance.resize());
+        resizeObserver.observe(container);
+      }
 
       instance.on('load', () => {
         instance.addSource('stac-footprint', {
@@ -96,6 +106,7 @@ function MapImpl({node, map}: StacMapProps): React.JSX.Element {
 
     return () => {
       cancelled = true;
+      if (resizeObserver) resizeObserver.disconnect();
       if (mapInstance) mapInstance.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
