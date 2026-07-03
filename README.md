@@ -14,9 +14,15 @@ footprint map - no server, no headless-browser prerendering, no SPA runtime.
 This README is organized around the four things you might need:
 
 - **[Tutorial](#tutorial-getting-started)** - install it and generate your first pages.
-- **[How-to guides](#how-to-guides)** - accomplish specific tasks (disable maps, swizzle components, run the demo, handle large catalogs).
+- **[How-to guides](#how-to-guides)** - accomplish specific tasks (disable maps, swizzle components, run the demo, handle large catalogs, link back from your STAC JSON).
 - **[Reference](#reference)** - plugin and map option tables.
 - **[Explanation](#explanation-why-this-exists)** - why this plugin exists and how it works internally.
+
+> [!TIP]
+> The STAC spec's own [best practices document](https://github.com/radiantearth/stac-spec/blob/master/best-practices.md#using-relation-types)
+> recommends every Item/Collection link to an HTML version of itself via
+> `"rel": "alternate", "type": "text/html"`. This plugin is exactly the tool
+> that generates that HTML - see [Link back to this plugin from your STAC JSON](#link-back-to-this-plugin-from-your-stac-json).
 
 ## Demo
 
@@ -27,6 +33,9 @@ deployed on every merge to `main`:
 
 Because Overture's collections hold hundreds of Items each, the demo sets
 `maxItemsPerCollection` to keep the build bounded - see [Options](#plugin-options).
+The demo's basemap tiles are Overture's hosted PMTiles, which are for demo/
+inspection use only - see [Map context without a tile server](#map-context-without-a-tile-server)
+before pointing production sites at them.
 
 ## Tutorial: getting started
 
@@ -116,6 +125,61 @@ npm run build --workspace example   # builds the demo site into example/build
 
 Then open `example/build/stac/index.html` (or `npm run serve --workspace example`).
 
+### Link back to this plugin from your STAC JSON
+
+Every generated page already links *forward* to its source JSON via
+`<link rel="alternate" type="application/json">` in the page `<head>` (see
+[How it works](#how-it-works)). The STAC spec's
+[best practices document](https://github.com/radiantearth/stac-spec/blob/master/best-practices.md#using-relation-types)
+recommends the reverse direction too: your Catalog/Collection/Item JSON should
+link *to* its HTML rendering with `"rel": "alternate", "type": "text/html"`, so
+API clients and STAC-aware tools know a human-browsable page exists:
+
+```json
+{
+  "rel": "alternate",
+  "type": "text/html",
+  "href": "https://your-site.example/stac/collections/my-collection",
+  "title": "HTML version of this STAC Collection"
+}
+```
+
+The `href` is the same route this plugin generates for that node
+(`routeBasePath` + the node's path, e.g. `/stac/collections/my-collection`).
+Adding this link is optional - the plugin works fine without it - but it makes
+the relationship between your static JSON and this plugin's HTML output
+explicit and spec-compliant, matching the pattern used by
+[STAC Browser](https://github.com/radiantearth/stac-browser) and other
+STAC-aware clients.
+
+If you're authoring or updating your catalog with
+[`pystac`](https://pystac.readthedocs.io) (the Python STAC library - not to be
+confused with [`pystac-client`](https://pystac-client.readthedocs.io), which
+is for *querying* STAC APIs), this is a one-liner. `pystac` ships `RelType.ALTERNATE`
+and `MediaType.HTML` constants for exactly this purpose:
+
+```python
+import pystac
+
+collection = pystac.Collection.from_file("./stac/catalog.json")
+
+collection.add_link(
+    pystac.Link(
+        rel=pystac.RelType.ALTERNATE,
+        target="https://your-site.example/stac/collections/my-collection",
+        media_type=pystac.MediaType.HTML,
+        title="HTML version of this STAC Collection",
+    )
+)
+
+collection.save_object()
+```
+
+The same works on `pystac.Catalog` and `pystac.Item` objects. If you're
+generating many Items, add this link in the same step where you set each
+Item's `self` link, deriving the HTML `target` from the Item's id/collection
+the same way you derive its JSON path.
+
 ## Reference
 
 ### Plugin options
@@ -168,7 +232,15 @@ a STAC catalog can be implemented in a completely "static" manner as a group
 of hyperlinked Catalog, Collection, and Item files, letting data publishers
 expose their data as a browsable set of files without deploying an API or
 database. HTML rendering isn't part of that core spec - it's left to
-downstream tooling.
+downstream tooling. That said, the spec's own
+[best practices document](https://github.com/radiantearth/stac-spec/blob/master/best-practices.md#using-relation-types)
+explicitly anticipates and endorses HTML tooling like this plugin: its link
+`rel` types table recommends every Item/Collection JSON carry an `"alternate"`
+link with `"type": "text/html"` pointing at a human-browsable rendering of
+that record, a convention added in the spec's
+[1.0.0 changelog](https://github.com/radiantearth/stac-spec/blob/master/CHANGELOG.md).
+This plugin generates exactly that HTML target - see
+[Link back to this plugin from your STAC JSON](#link-back-to-this-plugin-from-your-stac-json).
 
 That downstream tool turned out to be [STAC Browser](https://github.com/radiantearth/stac-browser),
 a Vue single-page application that renders STAC JSON into an interactive UI.
@@ -236,8 +308,8 @@ generation happens once at build time rather than per-request in the browser.
 
 Basemap previews for STAC data are commonly built on a dedicated raster tile
 server (for example [`marblecutter-virtual`](https://github.com/mojodna/marblecutter-virtual)
-serving Cloud-Optimized GeoTIFFs on demand). This project instead uses
-[Overture Maps' hosted PMTiles](https://docs.overturemaps.org/getting-data/overture-on-aws/) -
+serving Cloud-Optimized GeoTIFFs on demand). This project's demo instead uses
+[Overture Maps' hosted PMTiles](https://docs.overturemaps.org/getting-data/cloud-sources/#pmtiles) -
 static tile archives published to a public S3 bucket with every Overture
 release - read directly from the browser via HTTP range requests using
 [`pmtiles.js`](https://github.com/protomaps/PMTiles) and MapLibre. No tile
@@ -246,6 +318,19 @@ the catalog rendering does. This gives every Item page basemap context
 (roads, buildings, places) under its footprint/bbox for free. It does not
 solve rendering the STAC asset itself (e.g. COG preview) - that's a separate,
 deferred problem.
+
+> [!WARNING]
+> **This is demo-only, not a production basemap.** Overture's own docs state
+> these tiles "power the [Explorer site](https://explore.overturemaps.org) and
+> are designed for data inspection rather than production cartography" (see
+> [Getting Data - PMTiles](https://docs.overturemaps.org/getting-data/cloud-sources/#pmtiles)).
+> The `pmtilesUrl` in this repo's [demo config](./example/docusaurus.config.js)
+> points at Overture's hosted tiles purely to make the demo runnable
+> out-of-the-box. For your own site, generate and host your own PMTiles - see
+> [Bring Your Own Data](https://docs.overturemaps.org/blog/2026/06/30/speeding-up-tiles/#bring-your-own-data)
+> and the [`overture-tiles`](https://github.com/OvertureMaps/overture-tiles)
+> project - or point `map.pmtilesUrl` / `map.style` (see
+> [Map options](#map-options)) at any tile source you control.
 
 ### Prior art considered
 
