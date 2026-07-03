@@ -80,7 +80,15 @@ export default function pluginStac(
           const now = Date.now();
           if (now - lastLoggedAt >= PROGRESS_INTERVAL_MS && count > lastLoggedCount) {
             const seconds = (now - startedAt) / 1000;
-            const rate = (count / seconds).toFixed(1);
+            // Windowed (instantaneous) rate since the last heartbeat, not a
+            // cumulative average: `count / seconds` mechanically decays toward
+            // the steady-state rate as the fast initial fetches are diluted,
+            // which reads as a phantom "slowdown". Δcount/Δtime is the honest
+            // signal and stays flat when the crawl is healthy.
+            const rate = (
+              (count - lastLoggedCount) /
+              ((now - lastLoggedAt) / 1000)
+            ).toFixed(1);
             log(
               `  …crawled ${count} nodes so far ` +
                 `(${seconds.toFixed(0)}s elapsed, ${rate} nodes/s)`,
