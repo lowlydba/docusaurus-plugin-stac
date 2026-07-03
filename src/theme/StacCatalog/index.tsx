@@ -31,7 +31,9 @@ export default function StacCatalog({
         <header className="stac-header">
           <TypeBadge type={node.type} />
           <h1 className="stac-title">{node.title}</h1>
-          <code className="stac-id">{node.id}</code>
+          {node.id !== node.title && (
+            <code className="stac-id">{node.id}</code>
+          )}
         </header>
         <SourceJsonLink jsonHref={jsonHref} />
         {stac.description && <p className="stac-description">{stac.description}</p>}

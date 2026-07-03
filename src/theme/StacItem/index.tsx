@@ -31,15 +31,18 @@ export default function StacItem({
         <header className="stac-header">
           <TypeBadge type={node.type} />
           <h1 className="stac-title">{node.title}</h1>
-          <code className="stac-id">{node.id}</code>
+          {node.id !== node.title && (
+            <code className="stac-id">{node.id}</code>
+          )}
           {stac.collection && (
-            <span className="stac-collection-ref">
-              <Translate
-                id="stac.item.inCollection"
-                values={{collection: stac.collection}}
-              >
-                {'in collection {collection}'}
-              </Translate>
+            <span
+              className="stac-collection-ref"
+              title={translate({
+                id: 'stac.item.collectionTitle',
+                message: 'Collection',
+              })}
+            >
+              {stac.collection}
             </span>
           )}
         </header>

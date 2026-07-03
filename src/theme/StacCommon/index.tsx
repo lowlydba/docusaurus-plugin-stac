@@ -11,7 +11,12 @@ import type {
   StacNode,
   StacObject,
 } from '../../types.js';
-import {formatFieldValue, getFieldLabel} from '../../fields/registry.js';
+import {
+  formatFieldValue,
+  getFieldLabel,
+  hasFieldFormatter,
+} from '../../fields/registry.js';
+import {JsonBlock} from './JsonBlock.js';
 
 // ---------------------------------------------------------------------------
 // Formatting helpers
@@ -28,6 +33,11 @@ export function formatValue(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+/** True for a non-null, non-array object — a nested structure best shown as JSON. */
+function isNestedObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 /** Best-effort bbox `[west, south, east, north]` from a GeoJSON geometry. */
@@ -601,7 +611,7 @@ function LazyItemCard({
       <div className="stac-lazy__card-head">
         <TypeBadge type="Item" />
         <span className="stac-lazy__card-title">{title}</span>
-        <code className="stac-id">{stac.id}</code>
+        {stac.id !== title && <code className="stac-id">{stac.id}</code>}
       </div>
       {datetime && (
         <p className="stac-lazy__card-datetime">{datetime}</p>
@@ -650,7 +660,9 @@ export function KeyValueTable({
             <th scope="row" className="stac-kv__key">
               {k}
             </th>
-            <td className="stac-kv__value">{formatValue(v)}</td>
+            <td className="stac-kv__value">
+              {isNestedObject(v) ? <JsonBlock value={v} /> : formatValue(v)}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -681,7 +693,11 @@ export function PropertiesTable({
               {getFieldLabel(key)}
             </th>
             <td className="stac-kv__value">
-              {formatFieldValue(key, properties[key])}
+              {isNestedObject(properties[key]) && !hasFieldFormatter(key) ? (
+                <JsonBlock value={properties[key]} />
+              ) : (
+                formatFieldValue(key, properties[key])
+              )}
             </td>
           </tr>
         ))}

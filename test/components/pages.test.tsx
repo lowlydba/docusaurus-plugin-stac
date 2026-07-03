@@ -140,6 +140,7 @@ describe('StacItem', () => {
   it('renders properties, assets, collection ref and parent link', () => {
     const node = baseNode({
       type: 'Item',
+      id: 'item',
       routePath: '/stac/coll/item',
       title: 'The Item',
       parentRoutePath: '/stac/coll',
@@ -155,7 +156,11 @@ describe('StacItem', () => {
     });
     render(<StacItem data={pageData(node)} />);
     expect(screen.getByRole('heading', {name: 'The Item'})).toBeInTheDocument();
-    expect(screen.getByText('in collection coll')).toBeInTheDocument();
+    // Collection is shown as a plain chip (its id), not an "in collection …" phrase.
+    expect(screen.getByText('coll')).toBeInTheDocument();
+    expect(screen.queryByText(/in collection/)).not.toBeInTheDocument();
+    // id === differs from title here, so the id chip is shown.
+    expect(screen.getByText('item')).toBeInTheDocument();
     expect(screen.getByText('Cloud cover')).toBeInTheDocument();
     expect(screen.getByText('Thumb')).toBeInTheDocument();
     expect(screen.getByText('← Back to parent')).toBeInTheDocument();
@@ -173,5 +178,46 @@ describe('StacItem', () => {
     render(<StacItem data={pageData(node)} />);
     expect(screen.getByRole('heading', {name: 'Lonely'})).toBeInTheDocument();
     expect(screen.queryByText('← Back to parent')).not.toBeInTheDocument();
+  });
+
+  it('omits the redundant id chip when id equals the title', () => {
+    const node = baseNode({
+      type: 'Item',
+      id: '00021',
+      routePath: '/stac/00021',
+      title: '00021',
+      stac: {id: '00021', links: [], assets: {}} as StacNode['stac'],
+    });
+    const {container} = render(<StacItem data={pageData(node)} />);
+    // Title is present, but there is no separate `.stac-id` chip repeating it.
+    expect(screen.getByRole('heading', {name: '00021'})).toBeInTheDocument();
+    expect(container.querySelector('.stac-id')).toBeNull();
+  });
+
+  it('renders a nested object property as a highlighted JSON block', () => {
+    const node = baseNode({
+      type: 'Item',
+      routePath: '/stac/item',
+      title: 'The Item',
+      stac: {
+        id: 'item',
+        links: [],
+        assets: {},
+        properties: {
+          'storage:schemes': {
+            aws: {
+              type: 'aws-s3',
+              platform: 'https://{bucket}.s3.{region}.amazonaws.com',
+            },
+          },
+        },
+      } as StacNode['stac'],
+    });
+    const {container} = render(<StacItem data={pageData(node)} />);
+    expect(container.querySelector('pre.stac-json')).not.toBeNull();
+    const placeholders = Array.from(
+      container.querySelectorAll('.stac-json__placeholder'),
+    ).map((el) => el.textContent);
+    expect(placeholders).toEqual(['{bucket}', '{region}']);
   });
 });
