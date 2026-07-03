@@ -86,11 +86,6 @@ export function StorageSchemesValue({
               <div className="stac-storage-schemes__head">
                 <span className="stac-storage-schemes__id">{id}</span>
                 <ProviderIcon provider={provider} />
-                {typeof scheme.type === 'string' && (
-                  <span className="stac-storage-schemes__type">
-                    {scheme.type}
-                  </span>
-                )}
               </div>
               {uri ? (
                 <div className="stac-storage-schemes__uri">
