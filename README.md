@@ -33,6 +33,9 @@ deployed on every merge to `main`:
 
 Because Overture's collections hold hundreds of Items each, the demo sets
 `maxItemsPerCollection` to keep the build bounded - see [Options](#plugin-options).
+The demo's basemap tiles are Overture's hosted PMTiles, which are for demo/
+inspection use only - see [Map context without a tile server](#map-context-without-a-tile-server)
+before pointing production sites at them.
 
 ## Tutorial: getting started
 
@@ -305,8 +308,8 @@ generation happens once at build time rather than per-request in the browser.
 
 Basemap previews for STAC data are commonly built on a dedicated raster tile
 server (for example [`marblecutter-virtual`](https://github.com/mojodna/marblecutter-virtual)
-serving Cloud-Optimized GeoTIFFs on demand). This project instead uses
-[Overture Maps' hosted PMTiles](https://docs.overturemaps.org/getting-data/overture-on-aws/) -
+serving Cloud-Optimized GeoTIFFs on demand). This project's demo instead uses
+[Overture Maps' hosted PMTiles](https://docs.overturemaps.org/getting-data/cloud-sources/#pmtiles) -
 static tile archives published to a public S3 bucket with every Overture
 release - read directly from the browser via HTTP range requests using
 [`pmtiles.js`](https://github.com/protomaps/PMTiles) and MapLibre. No tile
@@ -315,6 +318,18 @@ the catalog rendering does. This gives every Item page basemap context
 (roads, buildings, places) under its footprint/bbox for free. It does not
 solve rendering the STAC asset itself (e.g. COG preview) - that's a separate,
 deferred problem.
+
+**This is demo-only, not a production basemap.** Overture's own docs state
+these tiles "power the [Explorer site](https://explore.overturemaps.org) and
+are designed for data inspection rather than production cartography" (see
+[Getting Data - PMTiles](https://docs.overturemaps.org/getting-data/cloud-sources/#pmtiles)).
+The `pmtilesUrl` in this repo's [demo config](./example/docusaurus.config.js)
+points at Overture's hosted tiles purely to make the demo runnable
+out-of-the-box. For your own site, generate and host your own PMTiles - see
+[Bring Your Own Data](https://docs.overturemaps.org/blog/2026/06/30/speeding-up-tiles/#bring-your-own-data)
+and the [`overture-tiles`](https://github.com/OvertureMaps/overture-tiles)
+project - or point `map.pmtilesUrl` / `map.style` (see
+[Map options](#map-options)) at any tile source you control.
 
 ### Prior art considered
 
