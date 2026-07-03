@@ -53,7 +53,7 @@ jobs:
       - name: Build demo site (Overture STAC catalog + PMTiles basemap)
         working-directory: example
         env:
-          STAC_CATALOG_URL: https://labs.overturemaps.org/stac/catalog.json
+          STAC_CATALOG_URL: https://stac.overturemaps.org/catalog.json
           STAC_MAX_ITEMS: '5000'
           STAC_PMTILES_URL: https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-05-20.0/base.pmtiles
           DOCS_URL: https://lowlydba.github.io
