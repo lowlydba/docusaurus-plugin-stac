@@ -606,6 +606,14 @@
   border: 1px solid var(--stac-border-color);
   color: var(--ifm-color-emphasis-700);
 }
+.stac-storage-schemes__icon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+.stac-storage-schemes__icon--generic {
+  color: var(--ifm-color-emphasis-500);
+}
 .stac-storage-schemes__uri {
   display: flex;
   align-items: center;

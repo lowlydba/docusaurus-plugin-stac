@@ -3,6 +3,7 @@ import Translate, {translate} from '@docusaurus/Translate';
 
 import {JsonBlock} from './JsonBlock.js';
 import {CopyTextButton} from './CopyButton.js';
+import {ProviderIcon, type StorageProviderKind} from './ProviderIcons.js';
 
 const PLACEHOLDER_RE = /\{([^{}\s]+)\}/g;
 
@@ -31,6 +32,34 @@ function isSchemeObject(value: unknown): value is Record<string, unknown> {
 }
 
 /**
+ * Best-effort detection of which major cloud provider a storage scheme
+ * belongs to, so a recognizable brand icon can be shown next to it. The STAC
+ * storage extension only standardizes `type` values for AWS (`aws-s3`) and
+ * Azure (`ms-azure`) — GCP has no documented `type`, so it's inferred from
+ * the id/platform instead. `custom-s3` is the extension's documented type
+ * for generic/non-AWS S3-compatible stores (MinIO, Wasabi, etc.) and is
+ * checked first so it's never mistaken for AWS.
+ */
+export function detectStorageProvider(
+  id: string,
+  scheme: Record<string, unknown>,
+  resolvedUri: string | undefined,
+): StorageProviderKind {
+  const type =
+    typeof scheme.type === 'string' ? scheme.type.toLowerCase() : '';
+  if (type === 'custom-s3') return 'generic';
+
+  const platform =
+    resolvedUri ?? (typeof scheme.platform === 'string' ? scheme.platform : '');
+  const haystack = `${id} ${type} ${platform}`.toLowerCase();
+
+  if (/\baws\b|aws-s3|amazonaws\.com/.test(haystack)) return 'aws';
+  if (/azure|\.windows\.net/.test(haystack)) return 'azure';
+  if (/\bgcp\b|\bgcs\b|google|googleapis\.com/.test(haystack)) return 'gcp';
+  return 'generic';
+}
+
+/**
  * Renders the STAC storage extension's `storage:schemes` property as a list
  * of resolved, copyable URIs (e.g.
  * `https://overturemapswestus2.blob.core.windows.net/`) rather than the raw
@@ -53,10 +82,12 @@ export function StorageSchemesValue({
       <ul className="stac-storage-schemes__list">
         {schemes.map(([id, scheme]) => {
           const uri = resolvePlatformUri(scheme);
+          const provider = detectStorageProvider(id, scheme, uri);
           return (
             <li key={id} className="stac-storage-schemes__item">
               <div className="stac-storage-schemes__head">
                 <span className="stac-storage-schemes__id">{id}</span>
+                <ProviderIcon provider={provider} />
                 {typeof scheme.type === 'string' && (
                   <span className="stac-storage-schemes__type">
                     {scheme.type}

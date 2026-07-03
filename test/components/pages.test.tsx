@@ -307,6 +307,15 @@ describe('StacItem', () => {
       screen.getByRole('button', {name: 'Copy azure storage URI'}),
     ).toBeInTheDocument();
 
+    // Each scheme gets a decorative provider icon next to its id/type.
+    const heads = container.querySelectorAll('.stac-storage-schemes__head');
+    expect(heads).toHaveLength(2);
+    heads.forEach((head) => {
+      const icon = head.querySelector('svg.stac-storage-schemes__icon');
+      expect(icon).not.toBeNull();
+      expect(icon).toHaveAttribute('aria-hidden', 'true');
+    });
+
     // Raw JSON is still available, but collapsed behind a <details> toggle.
     const details = container.querySelector('details.stac-storage-schemes__raw');
     expect(details).not.toBeNull();
