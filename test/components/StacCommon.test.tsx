@@ -14,6 +14,8 @@ import {
   PropertiesTable,
   AssetList,
   FootprintText,
+  StacHead,
+  SourceJsonLink,
 } from '../../src/theme/StacCommon/index.js';
 import type {StacChildRef, StacLazyChildRef, StacNode} from '../../src/types.js';
 
@@ -334,6 +336,48 @@ describe('AssetList', () => {
   it('returns null when there are no assets', () => {
     const {container} = render(<AssetList assets={undefined} />);
     expect(container.querySelector('.stac-assets')).toBeNull();
+  });
+});
+
+describe('StacHead', () => {
+  it('emits an alternate JSON link and JSON-LD script', () => {
+    render(
+      <StacHead
+        jsonHref="https://cat.test/n.json"
+        jsonLd={{'@type': 'Dataset', name: 'N'}}
+      />,
+    );
+    const link = document.querySelector(
+      'link[rel="alternate"][href="https://cat.test/n.json"]',
+    );
+    expect(link).toHaveAttribute('type', 'application/json');
+    const script = document.querySelector(
+      'script[type="application/ld+json"]',
+    );
+    expect(script?.textContent).toContain('"name":"N"');
+  });
+
+  it('renders nothing without a jsonHref', () => {
+    const {container} = render(<StacHead jsonLd={{'@type': 'Dataset'}} />);
+    expect(container.querySelector('link')).toBeNull();
+    expect(container.querySelector('script')).toBeNull();
+  });
+});
+
+describe('SourceJsonLink', () => {
+  it('renders a download + copy control for the source JSON', () => {
+    render(<SourceJsonLink jsonHref="https://cat.test/n.json" />);
+    const link = screen.getByRole('link', {name: /view source json/i});
+    expect(link).toHaveAttribute('href', 'https://cat.test/n.json');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(
+      screen.getByRole('button', {name: /copy link to stac json/i}),
+    ).toBeInTheDocument();
+  });
+
+  it('renders nothing without a jsonHref', () => {
+    const {container} = render(<SourceJsonLink />);
+    expect(container.querySelector('.stac-source-json')).toBeNull();
   });
 });
 

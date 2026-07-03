@@ -7,6 +7,7 @@ import {normalizeUrl} from '@docusaurus/utils';
 import {walkCatalog} from './catalog-walker.js';
 import {normalizeOptions} from './options.js';
 import {buildNavTree, buildSearchIndex} from './nav.js';
+import {buildDataset} from './jsonld.js';
 import type {
   StacContent,
   StacGlobalData,
@@ -45,6 +46,13 @@ export default function pluginStac(
   const rootSource = isHttp
     ? options.path
     : path.resolve(context.siteDir, options.path);
+
+  const siteUrl = context.siteConfig?.url ?? '';
+  // We link agents to the *upstream* STAC source rather than re-emitting our
+  // (link-rewritten) copy. Only http(s) sources are web-addressable; local
+  // filesystem catalogs get no JSON link (serve them over http to enable it).
+  const remoteJsonHref = (node: StacNode): string | undefined =>
+    /^https?:\/\//i.test(node.sourceHref) ? node.sourceHref : undefined;
 
   return {
     name: 'docusaurus-plugin-stac',
@@ -108,12 +116,22 @@ export default function pluginStac(
 
       log(`Generating ${content.nodes.length} static route(s)…`);
       for (const node of content.nodes) {
+        const jsonHref = remoteJsonHref(node);
+        const jsonLd = jsonHref
+          ? (buildDataset(node, {
+              pageUrl: normalizeUrl([siteUrl, context.baseUrl, node.routePath]),
+              jsonUrl: jsonHref,
+            }) as unknown as Record<string, unknown>)
+          : undefined;
+
         const pageData: StacPageData = {
           node,
           routeBasePath: options.routeBasePath,
           map: options.map,
           itemsPerPage: options.itemsPerPage,
           searchEnabled: options.search,
+          jsonHref,
+          jsonLd,
         };
         const dataPath = await createData(
           `stac-${node.routePath.replace(/[^a-z0-9]+/gi, '_')}.json`,

@@ -9,6 +9,8 @@ import {
   ChildList,
   KeyValueTable,
   LazyChildList,
+  SourceJsonLink,
+  StacHead,
   TypeBadge,
 } from '../StacCommon/index.js';
 import {formatFieldValue} from '../../fields/registry.js';
@@ -18,7 +20,7 @@ export default function StacCollection({
 }: {
   data: StacPageData;
 }): React.JSX.Element {
-  const {node, routeBasePath, itemsPerPage} = data;
+  const {node, routeBasePath, itemsPerPage, jsonHref, jsonLd} = data;
   const stac = node.stac as StacCollectionType;
 
   const spatial = stac.extent?.spatial?.bbox?.[0];
@@ -48,6 +50,7 @@ export default function StacCollection({
 
   return (
     <Layout title={node.title} description={stac.description}>
+      <StacHead jsonHref={jsonHref} jsonLd={jsonLd} />
       <main className="container margin-vert--lg stac-page">
         <Breadcrumbs node={node} routeBasePath={routeBasePath} />
         <header className="stac-header">
@@ -55,6 +58,7 @@ export default function StacCollection({
           <h1 className="stac-title">{node.title}</h1>
           <code className="stac-id">{node.id}</code>
         </header>
+        <SourceJsonLink jsonHref={jsonHref} />
         {stac.description && <p className="stac-description">{stac.description}</p>}
 
         <KeyValueTable

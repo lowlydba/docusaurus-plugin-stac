@@ -3,7 +3,14 @@ import Layout from '@theme/Layout';
 import Translate from '@docusaurus/Translate';
 
 import type {StacPageData} from '../../types.js';
-import {Breadcrumbs, ChildList, LazyChildList, TypeBadge} from '../StacCommon/index.js';
+import {
+  Breadcrumbs,
+  ChildList,
+  LazyChildList,
+  SourceJsonLink,
+  StacHead,
+  TypeBadge,
+} from '../StacCommon/index.js';
 import StacSearch from '../StacSearch/index.js';
 
 export default function StacCatalog({
@@ -11,12 +18,14 @@ export default function StacCatalog({
 }: {
   data: StacPageData;
 }): React.JSX.Element {
-  const {node, routeBasePath, itemsPerPage, searchEnabled} = data;
+  const {node, routeBasePath, itemsPerPage, searchEnabled, jsonHref, jsonLd} =
+    data;
   const stac = node.stac as {description?: string};
   const isRoot = node.routePath === routeBasePath;
 
   return (
     <Layout title={node.title} description={stac.description}>
+      <StacHead jsonHref={jsonHref} jsonLd={jsonLd} />
       <main className="container margin-vert--lg stac-page">
         <Breadcrumbs node={node} routeBasePath={routeBasePath} rootTitle={node.title} />
         <header className="stac-header">
@@ -24,6 +33,7 @@ export default function StacCatalog({
           <h1 className="stac-title">{node.title}</h1>
           <code className="stac-id">{node.id}</code>
         </header>
+        <SourceJsonLink jsonHref={jsonHref} />
         {stac.description && <p className="stac-description">{stac.description}</p>}
 
         {isRoot && searchEnabled && <StacSearch pluginId="default" />}

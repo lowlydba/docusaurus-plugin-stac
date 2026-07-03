@@ -244,6 +244,10 @@ export interface StacPageData {
   map: NormalizedStacMapOptions;
   itemsPerPage: number;
   searchEnabled: boolean;
+  /** Served path to this node's canonical STAC JSON (baseUrl-prefixed). */
+  jsonHref?: string;
+  /** schema.org `Dataset` JSON-LD describing this node, for agents/crawlers. */
+  jsonLd?: Record<string, unknown>;
 }
 
 /** A flattened entry used by the client search component. */

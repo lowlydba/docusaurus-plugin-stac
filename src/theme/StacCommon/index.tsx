@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
 import Translate, {translate} from '@docusaurus/Translate';
 
@@ -266,6 +267,62 @@ const TYPE_BADGE: Record<StacNode['type'], string> = {
   Collection: 'stac-badge--collection',
   Item: 'stac-badge--item',
 };
+
+/**
+ * Emits per-page machine-readable discovery metadata: an `alternate` link to the
+ * canonical STAC JSON and a schema.org `Dataset` JSON-LD block. Agents and search
+ * engines discover via the HTML page and can then consume the linked JSON.
+ */
+export function StacHead({
+  jsonHref,
+  jsonLd,
+}: {
+  jsonHref?: string;
+  jsonLd?: Record<string, unknown>;
+}): React.JSX.Element | null {
+  if (!jsonHref) return null;
+  return (
+    <Head>
+      <link rel="alternate" type="application/json" href={jsonHref} />
+      {jsonLd && (
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      )}
+    </Head>
+  );
+}
+
+/**
+ * A visible link to the page's canonical STAC JSON, with the same download +
+ * copy affordance used for assets, so humans and agents can grab the raw record.
+ */
+export function SourceJsonLink({
+  jsonHref,
+}: {
+  jsonHref?: string;
+}): React.JSX.Element | null {
+  if (!jsonHref) return null;
+  return (
+    <p className="stac-source-json stac-download">
+      <DownloadLink
+        href={jsonHref}
+        label={translate({
+          id: 'stac.sourceJson.download',
+          message: 'Download this record as STAC JSON',
+        })}
+      >
+        <Translate id="stac.sourceJson.view">View source JSON</Translate>
+      </DownloadLink>
+      <CopyLinkButton
+        href={jsonHref}
+        label={translate({
+          id: 'stac.sourceJson.copy',
+          message: 'Copy link to STAC JSON',
+        })}
+      />
+    </p>
+  );
+}
+
 
 export function TypeBadge({type}: {type: StacNode['type']}): React.JSX.Element {
   return <span className={`stac-badge ${TYPE_BADGE[type]}`}>{type}</span>;

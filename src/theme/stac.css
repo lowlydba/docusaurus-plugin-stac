@@ -290,6 +290,14 @@
   color: var(--stac-badge-item);
   border-color: var(--stac-badge-item);
 }
+.stac-source-json {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--stac-gap-sm);
+  margin: var(--stac-gap-sm) 0 0;
+  font-size: 0.85rem;
+}
 
 /* Map */
 .stac-map-section {
