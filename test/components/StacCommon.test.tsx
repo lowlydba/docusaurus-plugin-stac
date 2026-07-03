@@ -296,6 +296,41 @@ describe('AssetList', () => {
     expect(screen.getByText('data')).toBeInTheDocument();
   });
 
+  it('marks asset links as downloads and offers copy-link buttons', () => {
+    render(
+      <AssetList
+        assets={{
+          data: {href: 'https://cdn.test/scene/data.tif', title: 'Scene'},
+        }}
+      />,
+    );
+    // The link is presented as a download that opens in a new tab.
+    const link = screen.getByRole('link', {name: /scene/i});
+    expect(link).toHaveAttribute('href', 'https://cdn.test/scene/data.tif');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('title', 'Download Scene');
+    // File extension is surfaced.
+    expect(screen.getByText('TIF')).toBeInTheDocument();
+    // A copy-link button is present.
+    expect(
+      screen.getByRole('button', {name: /copy link to scene/i}),
+    ).toBeInTheDocument();
+  });
+
+  it('copies a resolved link to the clipboard when the copy button is clicked', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {clipboard: {writeText}});
+    render(
+      <AssetList
+        assets={{data: {href: 'https://cdn.test/scene/data.tif', title: 'Scene'}}}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', {name: /copy link to scene/i}));
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith('https://cdn.test/scene/data.tif'),
+    );
+  });
+
   it('returns null when there are no assets', () => {
     const {container} = render(<AssetList assets={undefined} />);
     expect(container.querySelector('.stac-assets')).toBeNull();

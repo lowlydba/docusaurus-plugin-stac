@@ -1,6 +1,7 @@
 # docusaurus-plugin-stac
 
 [![CI](https://github.com/lowlydba/docusaurus-plugin-stac/actions/workflows/ci.yml/badge.svg)](https://github.com/lowlydba/docusaurus-plugin-stac/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@lowlydba/docusaurus-plugin-stac?logo=npm)](https://www.npmjs.com/package/@lowlydba/docusaurus-plugin-stac)
 [![Built with Docusaurus](https://img.shields.io/badge/Built%20with-Docusaurus-3ECC5F?logo=docusaurus&logoColor=white)](https://docusaurus.io)
 
 A [Docusaurus](https://docusaurus.io) plugin that ingests a static
@@ -29,25 +30,7 @@ Because Overture's collections hold hundreds of Items each, the demo sets
 
 ## Tutorial: getting started
 
-This package is published to **GitHub Packages** under the `@lowlydba` scope
-(not the public npm registry). Tell npm where to find that scope by adding an
-`.npmrc` to your project (or `~/.npmrc`):
-
-```ini
-# .npmrc
-@lowlydba:registry=https://npm.pkg.github.com
-```
-
-Installing from GitHub Packages requires authentication with a GitHub personal
-access token that has the `read:packages` scope. Log in once:
-
-```bash
-npm login --scope=@lowlydba --registry=https://npm.pkg.github.com
-# Username: your GitHub username
-# Password: a GitHub PAT with `read:packages`
-```
-
-Then install the plugin:
+Install the plugin from npm:
 
 ```bash
 npm install @lowlydba/docusaurus-plugin-stac
