@@ -15,7 +15,7 @@ const maxItemsEnv = process.env.STAC_MAX_ITEMS;
 const maxItemsPerCollection = maxItemsEnv ? Number(maxItemsEnv) : undefined;
 const pmtilesUrl = process.env.STAC_PMTILES_URL || undefined;
 
-/** @type {import('docusaurus-plugin-stac').StacMapOptions} */
+/** @type {import('@lowlydba/docusaurus-plugin-stac').StacMapOptions} */
 const map = {height: 380};
 // Point the basemap at real Overture PMTiles when provided; the archive is read
 // directly in the browser via HTTP range requests (no tile server). Omit to
@@ -24,7 +24,7 @@ if (pmtilesUrl) {
   map.pmtilesUrl = pmtilesUrl;
 }
 
-/** @type {import('docusaurus-plugin-stac').StacPluginOptions} */
+/** @type {import('@lowlydba/docusaurus-plugin-stac').StacPluginOptions} */
 const stacOptions = {
   path: catalogPath,
   routeBasePath: '/stac',
@@ -75,7 +75,7 @@ const config = {
     ],
   ],
 
-  plugins: [['docusaurus-plugin-stac', stacOptions]],
+  plugins: [['@lowlydba/docusaurus-plugin-stac', stacOptions]],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */

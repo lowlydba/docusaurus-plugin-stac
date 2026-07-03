@@ -1,5 +1,5 @@
 {
-  "name": "docusaurus-plugin-stac",
+  "name": "@lowlydba/docusaurus-plugin-stac",
   "version": "0.1.0",
   "description": "Docusaurus plugin that ingests a static STAC catalog and generates real static HTML pages per Catalog, Collection and Item at build time.",
   "keywords": [
@@ -20,6 +20,9 @@
     "url": "git+https://github.com/lowlydba/docusaurus-plugin-stac.git"
   },
   "type": "module",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "workspaces": [
     "example"
   ],

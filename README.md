@@ -29,10 +29,28 @@ Because Overture's collections hold hundreds of Items each, the demo sets
 
 ## Tutorial: getting started
 
-Install the plugin:
+This package is published to **GitHub Packages** under the `@lowlydba` scope
+(not the public npm registry). Tell npm where to find that scope by adding an
+`.npmrc` to your project (or `~/.npmrc`):
+
+```ini
+# .npmrc
+@lowlydba:registry=https://npm.pkg.github.com
+```
+
+Installing from GitHub Packages requires authentication with a GitHub personal
+access token that has the `read:packages` scope. Log in once:
 
 ```bash
-npm install docusaurus-plugin-stac
+npm login --scope=@lowlydba --registry=https://npm.pkg.github.com
+# Username: your GitHub username
+# Password: a GitHub PAT with `read:packages`
+```
+
+Then install the plugin:
+
+```bash
+npm install @lowlydba/docusaurus-plugin-stac
 ```
 
 `maplibre-gl` and `pmtiles` ship as dependencies; `@docusaurus/core`, `react` and
@@ -46,7 +64,7 @@ collection JSON:
 module.exports = {
   plugins: [
     [
-      'docusaurus-plugin-stac',
+      '@lowlydba/docusaurus-plugin-stac',
       {
         // Required: path or URL to the root catalog/collection JSON.
         path: './stac/catalog.json',
@@ -76,7 +94,7 @@ Set `map: false` for users who don't have PMTiles access or don't want to build
 them - Item pages then render a text-only bounding-box footprint instead:
 
 ```js
-['docusaurus-plugin-stac', {path: './stac/catalog.json', map: false}]
+['@lowlydba/docusaurus-plugin-stac', {path: './stac/catalog.json', map: false}]
 ```
 
 If `map` is enabled but no `pmtilesUrl` / `style` is given, the map still draws
