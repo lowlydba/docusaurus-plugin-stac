@@ -45,7 +45,11 @@ const config = {
   baseUrl: process.env.DOCS_BASE_URL || '/',
   favicon: undefined,
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
+  },
 
   presets: [
     [

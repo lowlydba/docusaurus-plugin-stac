@@ -25,8 +25,10 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
+
+      - uses: lowlydba/sustainable-npm@31d51025884f424f58f22e4e6578178bb4e79632 # v3.0.0
 
       - name: Install dependencies
         run: npm ci
@@ -61,8 +63,10 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
+
+      - uses: lowlydba/sustainable-npm@31d51025884f424f58f22e4e6578178bb4e79632 # v3.0.0
 
       - name: Install dependencies
         run: npm ci
@@ -102,3 +106,14 @@ jobs:
           # Lets zizmor's online audits resolve refs without hitting rate limits.
           GH_TOKEN: ${{ github.token }}
         run: pipx run zizmor==1.26.1 --persona=pedantic .github/workflows
+
+  are-we-good:
+    name: CI
+    runs-on: ubuntu-latest
+    needs: [test, e2e, zizmor]
+    if: always()
+    permissions: {}
+    steps:
+      - uses: lowlydba/are-we-good@375b418aa07a163e0614537a3fa5c51e53a757e9 # v1.0.0
+        with:
+          jobs: ${{ toJSON(needs) }}
