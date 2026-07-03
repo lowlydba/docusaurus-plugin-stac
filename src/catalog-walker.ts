@@ -137,6 +137,13 @@ interface WalkOptions {
   routeBasePath: string;
   maxDepth: number;
   maxItemsPerCollection?: number;
+  /**
+   * Optional progress hook, invoked once per node as the catalog is crawled.
+   * Used by the plugin to surface build progress for large/remote catalogs
+   * (where the crawl can otherwise run silently for minutes). Kept as a
+   * caller-supplied callback so the walker itself stays pure and quiet in tests.
+   */
+  onNode?: (info: {count: number; type: StacNodeType; remote: boolean}) => void;
 }
 
 /**
@@ -145,7 +152,7 @@ interface WalkOptions {
  */
 export async function walkCatalog(
   rootSource: string,
-  {routeBasePath, maxDepth, maxItemsPerCollection}: WalkOptions,
+  {routeBasePath, maxDepth, maxItemsPerCollection, onNode}: WalkOptions,
 ): Promise<StacContent> {
   const itemCap = maxItemsPerCollection ?? Number.POSITIVE_INFINITY;
   const nodes: StacNode[] = [];
@@ -199,6 +206,7 @@ export async function walkCatalog(
       stac,
     };
     nodes.push(node);
+    onNode?.({count: nodes.length, type, remote: isHttp(source)});
 
     if (depth >= maxDepth) {
       return node;

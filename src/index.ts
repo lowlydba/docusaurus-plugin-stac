@@ -17,6 +17,13 @@ import type {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const LOG_PREFIX = '[docusaurus-plugin-stac]';
+
+function log(message: string): void {
+  // eslint-disable-next-line no-console
+  console.log(`${LOG_PREFIX} ${message}`);
+}
+
 function componentForType(type: StacNode['type']): string {
   switch (type) {
     case 'Collection':
@@ -43,11 +50,45 @@ export default function pluginStac(
     name: 'docusaurus-plugin-stac',
 
     async loadContent() {
-      return walkCatalog(rootSource, {
+      log(`Crawling STAC catalog at ${rootSource}…`);
+      const startedAt = Date.now();
+
+      // Throttled progress: for large or remote catalogs the crawl can run for
+      // minutes with no output, which looks like a hang. Emit a heartbeat at
+      // most every ~1.5s (and never for tiny local catalogs that finish first).
+      let lastLoggedAt = 0;
+      let lastLoggedCount = 0;
+
+      const content = await walkCatalog(rootSource, {
         routeBasePath: options.routeBasePath,
         maxDepth: options.maxDepth,
         maxItemsPerCollection: options.maxItemsPerCollection,
+        onNode: ({count, remote}) => {
+          if (!remote) return;
+          const now = Date.now();
+          if (now - lastLoggedAt >= 1500 && count > lastLoggedCount) {
+            log(`  …crawled ${count} nodes so far`);
+            lastLoggedAt = now;
+            lastLoggedCount = count;
+          }
+        },
       });
+
+      const counts = {Catalog: 0, Collection: 0, Item: 0};
+      let lazy = 0;
+      for (const node of content.nodes) {
+        counts[node.type]++;
+        lazy += node.lazyChildren.length;
+      }
+      const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+      log(
+        `Crawled ${content.nodes.length} nodes in ${elapsed}s ` +
+          `(${counts.Catalog} catalog(s), ${counts.Collection} collection(s), ` +
+          `${counts.Item} item(s)` +
+          (lazy > 0 ? `, ${lazy} lazy item(s)` : '') +
+          ').',
+      );
+      return content;
     },
 
     async contentLoaded({content, actions}) {
@@ -65,6 +106,7 @@ export default function pluginStac(
       };
       setGlobalData(globalData);
 
+      log(`Generating ${content.nodes.length} static route(s)…`);
       for (const node of content.nodes) {
         const pageData: StacPageData = {
           node,
@@ -93,6 +135,7 @@ export default function pluginStac(
           exact: true,
         });
       }
+      log(`Registered ${content.nodes.length} route(s).`);
     },
 
     getThemePath() {
