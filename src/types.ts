@@ -96,6 +96,20 @@ export interface StacChildRef {
   routePath: string;
 }
 
+/**
+ * A reference to an Item that exists in the source catalog but was NOT
+ * materialized into a static page (it fell past `maxItemsPerCollection`). It
+ * carries only the fetchable href + any link title, so the client can lazily
+ * load and render it on demand for human visitors. These are intentionally not
+ * crawlable (no static route) — the static, capped set is what crawlers see.
+ */
+export interface StacLazyChildRef {
+  /** Absolute http(s) URL the Item JSON can be fetched from in the browser. */
+  href: string;
+  /** Title from the source `item` link, if it provided one. */
+  title?: string;
+}
+
 export interface StacNode {
   /** STAC id. */
   id: string;
@@ -113,6 +127,12 @@ export interface StacNode {
   depth: number;
   /** Child catalogs/collections/items, in encounter order. */
   children: StacChildRef[];
+  /**
+   * Items past `maxItemsPerCollection` that were deferred to lazy client-side
+   * loading instead of getting their own static page. Empty for local catalogs
+   * (whose Items are always materialized).
+   */
+  lazyChildren: StacLazyChildRef[];
   /** The raw STAC object (links rewritten to internal routes where resolved). */
   stac: StacObject;
 }
@@ -170,11 +190,18 @@ export interface StacPluginOptions {
   /** Max depth to walk from the root (root = 0). Defaults to Infinity. */
   maxDepth?: number;
   /**
-   * Max number of `item`-linked children to materialize per parent
-   * catalog/collection. A practicality guardrail for API-scale catalogs (e.g.
-   * Overture) that expose thousands of items as static files; child/subcatalog
-   * links are always followed. Defaults to Infinity (spec-faithful: a page per
-   * Item). Catalog/Collection pages still paginate their full listing.
+   * Max number of `item`-linked children to materialize as static, crawlable
+   * pages per parent catalog/collection. A practicality guardrail for API-scale
+   * catalogs (e.g. Overture) that expose thousands of items as static files.
+   * Child/subcatalog links are always followed.
+   *
+   * Defaults to `100`. Items beyond the cap on **remote** (`http(s)`) catalogs
+   * are not fetched at build time (so builds stay bounded and crawlers see the
+   * capped set); instead they are rendered as a lazy, client-side "load on
+   * demand" list so human visitors can still browse them. Items in **local**
+   * catalogs are always fully materialized (a browser can't fetch un-served
+   * local files, and local reads are cheap). Set to `Infinity` to disable the
+   * cap entirely, or `0` to make every Item lazy.
    */
   maxItemsPerCollection?: number;
   /** Map configuration, or `false` to disable maps. Defaults to enabled. */

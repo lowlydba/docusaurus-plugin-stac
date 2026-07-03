@@ -37,6 +37,7 @@ function baseNode(part: Partial<StacNode> & Pick<StacNode, 'type'>): StacNode {
     sourceHref: '/stac/id',
     depth: 1,
     children: [],
+    lazyChildren: [],
     stac: {id: 'id', links: []} as StacNode['stac'],
     ...part,
   };

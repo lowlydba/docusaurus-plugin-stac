@@ -1,5 +1,5 @@
-import {describe, it, expect} from 'vitest';
-import {render, screen, fireEvent, within} from '@testing-library/react';
+import {describe, it, expect, vi, afterEach} from 'vitest';
+import {render, screen, fireEvent, within, waitFor} from '@testing-library/react';
 import React from 'react';
 
 import {
@@ -9,12 +9,13 @@ import {
   TypeBadge,
   Breadcrumbs,
   ChildList,
+  LazyChildList,
   KeyValueTable,
   PropertiesTable,
   AssetList,
   FootprintText,
 } from '../../src/theme/StacCommon/index.js';
-import type {StacChildRef, StacNode} from '../../src/types.js';
+import type {StacChildRef, StacLazyChildRef, StacNode} from '../../src/types.js';
 
 function node(stac: Record<string, unknown>, extra: Partial<StacNode> = {}): StacNode {
   return {
@@ -25,6 +26,7 @@ function node(stac: Record<string, unknown>, extra: Partial<StacNode> = {}): Sta
     sourceHref: '/stac/n',
     depth: 1,
     children: [],
+    lazyChildren: [],
     stac: {id: 'n', links: [], ...stac} as StacNode['stac'],
     ...extra,
   };
@@ -151,6 +153,81 @@ describe('ChildList', () => {
     expect(container.querySelector('.stac-pagination')).toBeNull();
     const items = container.querySelectorAll('.stac-child-list__item');
     expect(Array.from(items).every((li) => !li.hasAttribute('hidden'))).toBe(true);
+  });
+});
+
+describe('LazyChildList', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  const lazy = (n: number): StacLazyChildRef[] =>
+    Array.from({length: n}, (_, i) => ({
+      href: `https://cat.test/item-${i}.json`,
+      title: `Lazy ${i}`,
+    }));
+
+  it('renders nothing when there are no lazy children', () => {
+    const {container} = render(<LazyChildList lazyChildren={[]} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it('shows the on-demand note and a load button without fetching upfront', () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    render(<LazyChildList lazyChildren={lazy(3)} batchSize={2} />);
+    expect(
+      screen.getByText(/3 additional item\(s\) are loaded on demand/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', {name: 'Load 2 more'})).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('fetches and renders a batch of items on demand', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      const idx = url.match(/item-(\d)/)?.[1] ?? 'x';
+      return {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: async () => ({
+          type: 'Feature',
+          id: `remote-${idx}`,
+          title: `Remote Item ${idx}`,
+          properties: {datetime: `2023-05-0${idx}T00:00:00Z`, 'eo:cloud_cover': 7},
+          bbox: [-1, -2, 1, 2],
+          assets: {thumb: {href: 'thumb.png', title: 'Thumb'}},
+          links: [],
+        }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<LazyChildList lazyChildren={lazy(3)} batchSize={2} />);
+    fireEvent.click(screen.getByRole('button', {name: 'Load 2 more'}));
+
+    await waitFor(() => {
+      expect(screen.getByText('Remote Item 0')).toBeInTheDocument();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByText('Remote Item 1')).toBeInTheDocument();
+    // Datetime appears (both in the card header and the properties table).
+    expect(screen.getAllByText('2023-05-00T00:00:00Z').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Thumb')).toHaveLength(2);
+    // One item remains → button now offers to load the last one.
+    expect(screen.getByRole('button', {name: 'Load 1 more'})).toBeInTheDocument();
+  });
+
+  it('surfaces a fetch error without crashing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ok: false, status: 500, statusText: 'Server Error'})),
+    );
+    render(<LazyChildList lazyChildren={lazy(1)} batchSize={1} />);
+    fireEvent.click(screen.getByRole('button', {name: 'Load 1 more'}));
+    await waitFor(() => {
+      expect(screen.getByText(/Could not load/)).toBeInTheDocument();
+    });
   });
 });
 

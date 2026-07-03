@@ -8,6 +8,7 @@ import {
   DEFAULT_MAP_HEIGHT,
   DEFAULT_FOOTPRINT_COLOR,
   DEFAULT_ITEMS_PER_PAGE,
+  DEFAULT_MAX_ITEMS_PER_COLLECTION,
 } from '../../src/options.js';
 
 describe('normalizeRouteBase', () => {
@@ -68,13 +69,13 @@ describe('normalizeOptions', () => {
     expect(o.routeBasePath).toBe(DEFAULT_ROUTE_BASE);
     expect(o.id).toBe('default');
     expect(o.maxDepth).toBe(Number.POSITIVE_INFINITY);
-    expect(o.maxItemsPerCollection).toBe(Number.POSITIVE_INFINITY);
+    expect(o.maxItemsPerCollection).toBe(DEFAULT_MAX_ITEMS_PER_COLLECTION);
     expect(o.itemsPerPage).toBe(DEFAULT_ITEMS_PER_PAGE);
     expect(o.search).toBe(true);
     expect(o.map.enabled).toBe(true);
   });
 
-  it('normalizes maxItemsPerCollection (floors, allows 0, rejects negatives)', () => {
+  it('normalizes maxItemsPerCollection (floors, allows 0, Infinity opt-out, rejects negatives)', () => {
     expect(
       normalizeOptions({path: 'c', maxItemsPerCollection: 12.7}).maxItemsPerCollection,
     ).toBe(12);
@@ -82,8 +83,14 @@ describe('normalizeOptions', () => {
       normalizeOptions({path: 'c', maxItemsPerCollection: 0}).maxItemsPerCollection,
     ).toBe(0);
     expect(
-      normalizeOptions({path: 'c', maxItemsPerCollection: -3}).maxItemsPerCollection,
+      normalizeOptions({
+        path: 'c',
+        maxItemsPerCollection: Number.POSITIVE_INFINITY,
+      }).maxItemsPerCollection,
     ).toBe(Number.POSITIVE_INFINITY);
+    expect(
+      normalizeOptions({path: 'c', maxItemsPerCollection: -3}).maxItemsPerCollection,
+    ).toBe(DEFAULT_MAX_ITEMS_PER_COLLECTION);
   });
 
   it('honors explicit overrides and floors itemsPerPage', () => {

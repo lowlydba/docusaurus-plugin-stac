@@ -5,6 +5,7 @@ import {pathToFileURL} from 'node:url';
 import type {
   StacChildRef,
   StacContent,
+  StacLazyChildRef,
   StacNode,
   StacNodeType,
   StacObject,
@@ -194,6 +195,7 @@ export async function walkCatalog(
       parentRoutePath,
       depth,
       children: [],
+      lazyChildren: [],
       stac,
     };
     nodes.push(node);
@@ -210,13 +212,23 @@ export async function walkCatalog(
       const isChild = CHILD_RELS.has(rel);
       const isItem = ITEM_RELS.has(rel);
       if (!isChild && !isItem) continue;
-      // Guardrail: cap the number of Items materialized per parent so
-      // API-scale catalogs stay buildable. Child/subcatalog links are always
-      // followed. Once the cap is hit we skip remaining item links entirely
-      // (no fetch), keeping the build bounded.
-      if (isItem && itemCount >= itemCap) continue;
 
       const childSource = resolveHref(source, link.href);
+
+      // Guardrail: cap the number of Items materialized as static pages per
+      // parent so API-scale catalogs stay buildable. Child/subcatalog links are
+      // always followed. Once the cap is reached, further *remote* Items are
+      // deferred to lazy client-side loading (not fetched here) so builds stay
+      // bounded and crawlers see only the capped set — but humans can still
+      // browse them. Local Items are always materialized (a browser can't fetch
+      // un-served local files, and local reads are cheap).
+      if (isItem && itemCount >= itemCap && isHttp(childSource)) {
+        const lazy: StacLazyChildRef = {href: childSource};
+        if (typeof link.title === 'string') lazy.title = link.title;
+        node.lazyChildren.push(lazy);
+        continue;
+      }
+
       const child = await visit(
         childSource,
         routePath,

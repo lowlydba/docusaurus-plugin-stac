@@ -217,3 +217,55 @@
   color: var(--ifm-color-emphasis-700);
 }
 
+
+/* Lazy (load-on-demand) items — not crawlable, fetched client-side. */
+.stac-lazy {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--ifm-color-emphasis-300);
+}
+.stac-lazy__note {
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+  font-style: italic;
+}
+.stac-lazy__list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.stac-lazy__card {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--ifm-background-surface-color);
+}
+.stac-lazy__card--loading,
+.stac-lazy__card--error {
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-lazy__card--error .stac-lazy__card-error {
+  display: block;
+  color: var(--ifm-color-danger);
+  font-size: 0.9rem;
+}
+.stac-lazy__card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.stac-lazy__card-title {
+  font-weight: 600;
+}
+.stac-lazy__card-datetime {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--ifm-color-emphasis-700);
+}
+.stac-lazy__card-source {
+  font-size: 0.85rem;
+}

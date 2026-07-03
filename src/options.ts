@@ -8,6 +8,7 @@ export const DEFAULT_ROUTE_BASE = '/stac';
 export const DEFAULT_MAP_HEIGHT = 360;
 export const DEFAULT_FOOTPRINT_COLOR = '#e0114a';
 export const DEFAULT_ITEMS_PER_PAGE = 25;
+export const DEFAULT_MAX_ITEMS_PER_COLLECTION = 100;
 
 export function normalizeRouteBase(routeBasePath: string): string {
   let base = routeBasePath.trim();
@@ -60,7 +61,7 @@ export function normalizeOptions(
       typeof options.maxItemsPerCollection === 'number' &&
       options.maxItemsPerCollection >= 0
         ? Math.floor(options.maxItemsPerCollection)
-        : Number.POSITIVE_INFINITY,
+        : DEFAULT_MAX_ITEMS_PER_COLLECTION,
     map: normalizeMap(options.map),
     itemsPerPage,
     search: options.search ?? true,

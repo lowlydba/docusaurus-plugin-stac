@@ -3,7 +3,7 @@ import Layout from '@theme/Layout';
 import Translate from '@docusaurus/Translate';
 
 import type {StacPageData} from '../../types.js';
-import {Breadcrumbs, ChildList, TypeBadge} from '../StacCommon/index.js';
+import {Breadcrumbs, ChildList, LazyChildList, TypeBadge} from '../StacCommon/index.js';
 import StacSearch from '../StacSearch/index.js';
 
 export default function StacCatalog({
@@ -37,6 +37,7 @@ export default function StacCatalog({
           </Translate>
         </h2>
         <ChildList children={node.children} itemsPerPage={itemsPerPage} />
+        <LazyChildList lazyChildren={node.lazyChildren} batchSize={itemsPerPage} />
       </main>
     </Layout>
   );

@@ -99,18 +99,22 @@ describe('walkCatalog (filesystem fixture)', () => {
     expect(nodes.every((n) => n.depth <= 1)).toBe(true);
   });
 
-  it('caps items per collection but still follows child links', async () => {
+  it('does not cap local Items (they cannot be lazily fetched in-browser)', async () => {
     const {nodes} = await walkCatalog(fixtureRoot, {
       routeBasePath: '/stac',
       maxDepth: Number.POSITIVE_INFINITY,
       maxItemsPerCollection: 1,
     });
     const items = nodes.filter((n) => n.type === 'Item');
-    // collection-a has 2 items → only the first is kept; dup keeps its 1 item.
-    expect(items).toHaveLength(2);
-    expect(nodes.find((n) => n.id === 'item-3d')).toBeDefined();
-    expect(nodes.find((n) => n.id === 'item-point')).toBeUndefined();
-    expect(nodes.find((n) => n.id === 'deep-item')).toBeDefined();
+    // Local catalogs are always fully materialized regardless of the cap, since
+    // a browser can't fetch un-served local files and local reads are cheap.
+    expect(items.map((n) => n.id).sort()).toEqual([
+      'deep-item',
+      'item-3d',
+      'item-point',
+    ]);
+    // No lazy deferral happens for local sources.
+    expect(nodes.every((n) => n.lazyChildren.length === 0)).toBe(true);
     // Sub-catalogs/collections are still fully walked.
     expect(nodes.filter((n) => n.id === 'dup-collection')).toHaveLength(2);
   });
@@ -154,6 +158,54 @@ describe('walkCatalog (http, mocked fetch)', () => {
     });
     expect(root.id).toBe('http-root');
     expect(nodes.find((n) => n.id === 'http-item')?.type).toBe('Item');
+  });
+
+  it('defers remote Items past the cap to lazyChildren without fetching them', async () => {
+    const docs: Record<string, unknown> = {
+      'https://cat.test/catalog.json': {
+        type: 'Collection',
+        id: 'http-coll',
+        extent: {},
+        links: [
+          {rel: 'item', href: 'a.json', title: 'Item A'},
+          {rel: 'item', href: 'b.json', title: 'Item B'},
+          {rel: 'item', href: 'c.json', title: 'Item C'},
+          {rel: 'child', href: 'sub/catalog.json'},
+        ],
+      },
+      'https://cat.test/a.json': {type: 'Feature', id: 'a', properties: {}, assets: {}, links: []},
+      'https://cat.test/b.json': {type: 'Feature', id: 'b', properties: {}, assets: {}, links: []},
+      'https://cat.test/sub/catalog.json': {type: 'Catalog', id: 'http-sub', links: []},
+    };
+    const fetchMock = vi.fn(async (url: string) => {
+      if (!(url in docs)) throw new Error(`unexpected fetch: ${url}`);
+      return {
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: async () => JSON.stringify(docs[url]),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const {root, nodes} = await walkCatalog('https://cat.test/catalog.json', {
+      routeBasePath: '/stac',
+      maxDepth: Number.POSITIVE_INFINITY,
+      maxItemsPerCollection: 2,
+    });
+
+    // Two items materialized; the third is deferred (never fetched).
+    expect(nodes.filter((n) => n.type === 'Item').map((n) => n.id).sort()).toEqual([
+      'a',
+      'b',
+    ]);
+    expect(root.lazyChildren).toEqual([
+      {href: 'https://cat.test/c.json', title: 'Item C'},
+    ]);
+    // c.json is never requested; the child catalog is still followed.
+    const fetched = fetchMock.mock.calls.map((c) => c[0]);
+    expect(fetched).not.toContain('https://cat.test/c.json');
+    expect(nodes.find((n) => n.id === 'http-sub')).toBeDefined();
   });
 
   it('throws a helpful error on a failed http fetch', async () => {

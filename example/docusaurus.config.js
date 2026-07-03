@@ -5,13 +5,24 @@
 // the bundled sample catalog and (b) the deployed GitHub Pages demo pointed at
 // Overture's live STAC catalog:
 //   STAC_CATALOG_URL  STAC root (default: bundled ./stac/catalog.json)
-//   STAC_MAX_ITEMS    per-collection Item cap (default: unset = unbounded)
+//   STAC_MAX_ITEMS    per-collection Item cap (default: plugin default of 100)
+//   STAC_PMTILES_URL  PMTiles basemap archive read in-browser (default: none)
 //   DOCS_URL          site URL   (default: https://example.com)
 //   DOCS_BASE_URL     base path  (default: /)
 
 const catalogPath = process.env.STAC_CATALOG_URL || './stac/catalog.json';
 const maxItemsEnv = process.env.STAC_MAX_ITEMS;
 const maxItemsPerCollection = maxItemsEnv ? Number(maxItemsEnv) : undefined;
+const pmtilesUrl = process.env.STAC_PMTILES_URL || undefined;
+
+/** @type {import('docusaurus-plugin-stac').StacMapOptions} */
+const map = {height: 380};
+// Point the basemap at real Overture PMTiles when provided; the archive is read
+// directly in the browser via HTTP range requests (no tile server). Omit to
+// draw footprints over a plain background.
+if (pmtilesUrl) {
+  map.pmtilesUrl = pmtilesUrl;
+}
 
 /** @type {import('docusaurus-plugin-stac').StacPluginOptions} */
 const stacOptions = {
@@ -20,12 +31,7 @@ const stacOptions = {
   // Small page size so the demo exercises pagination with only a few items.
   itemsPerPage: 3,
   search: true,
-  // Map is enabled by default. To point at real Overture PMTiles, set
-  // `pmtilesUrl`. To disable maps entirely, set `map: false`.
-  map: {
-    // pmtilesUrl: 'https://overturemaps-tiles-us-west-2-beta.s3.amazonaws.com/2024-.../base.pmtiles',
-    height: 380,
-  },
+  map,
 };
 if (maxItemsPerCollection !== undefined) {
   stacOptions.maxItemsPerCollection = maxItemsPerCollection;

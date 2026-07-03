@@ -2,7 +2,14 @@ import React, {useState} from 'react';
 import Link from '@docusaurus/Link';
 import Translate, {translate} from '@docusaurus/Translate';
 
-import type {StacAsset, StacChildRef, StacNode} from '../../types.js';
+import type {
+  StacAsset,
+  StacChildRef,
+  StacItem,
+  StacLazyChildRef,
+  StacNode,
+  StacObject,
+} from '../../types.js';
 import {formatFieldValue, getFieldLabel} from '../../fields/registry.js';
 
 // ---------------------------------------------------------------------------
@@ -56,14 +63,19 @@ export function bboxFromGeometry(geometry: unknown): number[] | undefined {
 }
 
 export function itemBbox(node: StacNode): number[] | undefined {
-  const stac = node.stac as {bbox?: number[]; geometry?: unknown};
-  if (Array.isArray(stac.bbox) && stac.bbox.length >= 4) {
-    if (stac.bbox.length >= 6) {
-      return [stac.bbox[0], stac.bbox[1], stac.bbox[3], stac.bbox[4]];
+  return stacBbox(node.stac);
+}
+
+/** Best-effort `[west, south, east, north]` from a raw STAC object. */
+export function stacBbox(stac: unknown): number[] | undefined {
+  const s = stac as {bbox?: number[]; geometry?: unknown};
+  if (Array.isArray(s.bbox) && s.bbox.length >= 4) {
+    if (s.bbox.length >= 6) {
+      return [s.bbox[0], s.bbox[1], s.bbox[3], s.bbox[4]];
     }
-    return stac.bbox.slice(0, 4);
+    return s.bbox.slice(0, 4);
   }
-  return bboxFromGeometry(stac.geometry);
+  return bboxFromGeometry(s.geometry);
 }
 
 // ---------------------------------------------------------------------------
@@ -190,6 +202,164 @@ export function ChildList({
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * A client-only "load on demand" list for Items that were not materialized into
+ * static pages (they fell past `maxItemsPerCollection`). These are intentionally
+ * not crawlable — they're fetched in the browser when a human asks for them, so
+ * large/API-scale catalogs stay browsable without exploding the static build.
+ */
+export function LazyChildList({
+  lazyChildren,
+  batchSize,
+}: {
+  lazyChildren: StacLazyChildRef[];
+  batchSize?: number;
+}): React.JSX.Element | null {
+  const perBatch = batchSize && batchSize > 0 ? batchSize : 25;
+  const [visible, setVisible] = useState(0);
+  const [results, setResults] = useState<Record<number, LazyState>>({});
+
+  if (!lazyChildren || lazyChildren.length === 0) return null;
+
+  const loadRange = (from: number, to: number): void => {
+    for (let i = from; i < to; i++) {
+      setResults((r) => ({...r, [i]: {status: 'loading'}}));
+      const {href} = lazyChildren[i];
+      fetch(href)
+        .then((res) => {
+          if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+          return res.json();
+        })
+        .then((stac: StacObject) =>
+          setResults((r) => ({...r, [i]: {status: 'loaded', stac}})),
+        )
+        .catch((err: unknown) =>
+          setResults((r) => ({
+            ...r,
+            [i]: {status: 'error', message: (err as Error)?.message ?? String(err)},
+          })),
+        );
+    }
+  };
+
+  const loadMore = (): void => {
+    const next = Math.min(visible + perBatch, lazyChildren.length);
+    loadRange(visible, next);
+    setVisible(next);
+  };
+
+  const remaining = lazyChildren.length - visible;
+
+  return (
+    <div className="stac-lazy">
+      <p className="stac-lazy__note">
+        <Translate
+          id="stac.lazy.note"
+          values={{count: lazyChildren.length}}
+          description="Explains the on-demand item list"
+        >
+          {
+            '{count} additional item(s) are loaded on demand and are not indexed by search engines.'
+          }
+        </Translate>
+      </p>
+      {visible > 0 && (
+        <ul className="stac-lazy__list">
+          {lazyChildren.slice(0, visible).map((child, i) => (
+            <li key={child.href} className="stac-lazy__item">
+              <LazyItemCard child={child} state={results[i]} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {remaining > 0 && (
+        <button
+          type="button"
+          className="stac-lazy__more button button--secondary"
+          onClick={loadMore}
+        >
+          <Translate
+            id="stac.lazy.loadMore"
+            values={{count: Math.min(perBatch, remaining)}}
+          >
+            {'Load {count} more'}
+          </Translate>
+        </button>
+      )}
+    </div>
+  );
+}
+
+type LazyState =
+  | {status: 'loading'}
+  | {status: 'error'; message: string}
+  | {status: 'loaded'; stac: StacObject};
+
+function LazyItemCard({
+  child,
+  state,
+}: {
+  child: StacLazyChildRef;
+  state: LazyState | undefined;
+}): React.JSX.Element {
+  const fallbackTitle =
+    child.title ?? child.href.split('/').pop() ?? child.href;
+
+  if (!state || state.status === 'loading') {
+    return (
+      <div className="stac-lazy__card stac-lazy__card--loading">
+        <span className="stac-lazy__card-title">{fallbackTitle}</span>{' '}
+        <Translate id="stac.lazy.loading">Loading…</Translate>
+      </div>
+    );
+  }
+
+  if (state.status === 'error') {
+    return (
+      <div className="stac-lazy__card stac-lazy__card--error">
+        <span className="stac-lazy__card-title">{fallbackTitle}</span>
+        <span className="stac-lazy__card-error">
+          <Translate id="stac.lazy.error" values={{message: state.message}}>
+            {'Could not load: {message}'}
+          </Translate>
+        </span>{' '}
+        <a href={child.href} className="stac-lazy__card-source">
+          <Translate id="stac.lazy.source">Source JSON</Translate>
+        </a>
+      </div>
+    );
+  }
+
+  const stac = state.stac as StacItem;
+  const title =
+    (typeof stac.title === 'string' && stac.title) || stac.id || fallbackTitle;
+  const properties =
+    stac.properties && typeof stac.properties === 'object'
+      ? stac.properties
+      : {};
+  const datetime =
+    typeof properties.datetime === 'string' ? properties.datetime : undefined;
+
+  return (
+    <div className="stac-lazy__card">
+      <div className="stac-lazy__card-head">
+        <TypeBadge type="Item" />
+        <span className="stac-lazy__card-title">{title}</span>
+        <code className="stac-id">{stac.id}</code>
+      </div>
+      {datetime && (
+        <p className="stac-lazy__card-datetime">{datetime}</p>
+      )}
+      <PropertiesTable properties={properties} />
+      <AssetList assets={stac.assets} />
+      <FootprintText bbox={stacBbox(stac)} />
+      <a href={child.href} className="stac-lazy__card-source">
+        <Translate id="stac.lazy.source">Source JSON</Translate>
+      </a>
     </div>
   );
 }

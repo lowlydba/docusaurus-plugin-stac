@@ -8,6 +8,7 @@ import {
   Breadcrumbs,
   ChildList,
   KeyValueTable,
+  LazyChildList,
   TypeBadge,
 } from '../StacCommon/index.js';
 
@@ -72,6 +73,7 @@ export default function StacCollection({
           </Translate>
         </h2>
         <ChildList children={node.children} itemsPerPage={itemsPerPage} />
+        <LazyChildList lazyChildren={node.lazyChildren} batchSize={itemsPerPage} />
       </main>
     </Layout>
   );

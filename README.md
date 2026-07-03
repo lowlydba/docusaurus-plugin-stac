@@ -60,7 +60,7 @@ module.exports = {
         // Optional: map configuration (see below), or `false` to disable maps.
         map: {
           pmtilesUrl:
-            'https://overturemaps-tiles-us-west-2-beta.s3.amazonaws.com/2024-.../base.pmtiles',
+            'https://overturemaps-extras-us-west-2.s3.us-west-2.amazonaws.com/tiles/2026-05-20.0/base.pmtiles',
           height: 380,
         },
       },
@@ -78,8 +78,8 @@ module.exports = {
 | `id`            | `string`                      | `'default'`  | Instance id for multi-instance use.                                         |
 | `title`         | `string`                      | catalog title| Nav/root title override.                                                    |
 | `maxDepth`      | `number`                      | `Infinity`   | Max depth to walk from the root (root = 0).                                 |
-| `maxItemsPerCollection` | `number`              | `Infinity`   | Cap on the number of Items materialized per parent. Child/sub-catalog links are always followed; only Item links past the cap are skipped (not fetched). Use for API-scale catalogs (e.g. Overture) where a full walk would generate tens of thousands of pages. |
-| `itemsPerPage`  | `number`                      | `10`         | Page size for paginated child lists.                                        |
+| `maxItemsPerCollection` | `number`              | `100`        | Max Items per parent rendered as static, crawlable pages. Child/sub-catalog links are always followed. On **remote** catalogs, Items past the cap are deferred to lazy client-side loading (see below) so builds stay bounded; **local** Items are always fully materialized. Set to `Infinity` to disable the cap, or `0` to make every Item lazy. |
+| `itemsPerPage`  | `number`                      | `25`         | Page size for paginated child lists (also the lazy load batch size).        |
 | `search`        | `boolean`                     | `true`       | Build a client-side search index + search UI.                               |
 | `map`           | `object \| false`             | enabled      | Map configuration, or `false` to disable maps entirely.                     |
 
@@ -103,6 +103,21 @@ don't want to build them — Item pages then render a text-only bounding-box foo
 
 If `map` is enabled but no `pmtilesUrl` / `style` is given, the map still draws the
 Item footprint over a plain background.
+
+### Lazy loading of overflow Items
+
+On **remote** catalogs, any Items beyond `maxItemsPerCollection` for a given parent
+are not fetched at build time. Instead the parent page renders a "Load more" control
+that fetches those Items in the browser on demand. This keeps builds bounded and fast
+while still letting humans browse the full catalog. The tradeoff: lazily loaded Items
+are **not** part of the static HTML, so they aren't indexed by crawlers — only the
+first `maxItemsPerCollection` Items per parent are guaranteed crawlable. Raise the cap
+(or set it to `Infinity`) if you need every Item indexed.
+
+Lazy loading issues in-browser `fetch` requests to the STAC host, so that host must
+send permissive CORS headers (`Access-Control-Allow-Origin`). Overture's STAC does.
+**Local** catalogs are always fully materialized at build time (the browser can't read
+un-served local files), so the cap is effectively a no-op for them.
 
 ## Theme components
 
