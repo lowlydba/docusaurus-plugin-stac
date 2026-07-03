@@ -164,18 +164,17 @@ describe('walkCatalog (latest-release alias)', () => {
     expect(nodes.filter((n) => n.id === '2024-02-01')).toHaveLength(2);
 
     // The alias is discoverable: the root lists it as a child alongside the
-    // real dated releases, flagged so the UI can mark it a moving target.
-    expect(root.children).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({id: '2024-01-01', routePath: '/stac/2024-01-01'}),
-        expect.objectContaining({id: '2024-02-01', routePath: '/stac/2024-02-01'}),
-        expect.objectContaining({
-          id: '2024-02-01',
-          routePath: '/stac/latest',
-          isLatestAlias: true,
-        }),
-      ]),
-    );
+    // real dated releases, flagged so the UI can mark it a moving target —
+    // and it sorts first, ahead of every dated release it can point to.
+    expect(root.children).toEqual([
+      expect.objectContaining({
+        id: '2024-02-01',
+        routePath: '/stac/latest',
+        isLatestAlias: true,
+      }),
+      expect.objectContaining({id: '2024-01-01', routePath: '/stac/2024-01-01'}),
+      expect.objectContaining({id: '2024-02-01', routePath: '/stac/2024-02-01'}),
+    ]);
   });
 
   it('skips aliasing when a real "latest" route already exists at that level', async () => {
@@ -244,14 +243,14 @@ describe('walkCatalog (latest-release alias)', () => {
     expect(root.children).toEqual([
       expect.objectContaining({
         id: '2024-03-01',
-        routePath: '/stac/2024-03-01',
-        title: '2024-03-01',
-      }),
-      expect.objectContaining({
-        id: '2024-03-01',
         routePath: '/stac/latest',
         title: 'Latest release',
         isLatestAlias: true,
+      }),
+      expect.objectContaining({
+        id: '2024-03-01',
+        routePath: '/stac/2024-03-01',
+        title: '2024-03-01',
       }),
     ]);
   });

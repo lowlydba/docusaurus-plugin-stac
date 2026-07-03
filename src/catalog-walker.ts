@@ -364,7 +364,10 @@ function appendLatestAlias(
 
   if (aliasRoot) {
     const parentNode = nodes.find((n) => n.routePath === sourceNode.parentRoutePath);
-    parentNode?.children.push({
+    // Unshift, not push: the "latest" alias should sort first wherever
+    // `children` is rendered (main index page, sidebar tree), ahead of every
+    // dated release it can point to.
+    parentNode?.children.unshift({
       id: aliasRoot.id,
       type: aliasRoot.type,
       title: aliasRoot.title,

@@ -265,21 +265,22 @@ export function TypeBadge({type}: {type: StacNode['type']}): React.JSX.Element {
 }
 
 /**
- * Marks a page (or Contents/tree entry) as a moving alias — e.g. the `/latest`
- * mirror of whichever dated release currently holds that title — rather than
- * a fixed, permanent record. Distinct from `TypeBadge`, which conveys the
- * STAC object kind, not its stability.
+ * Marks a title/name as a moving alias — e.g. the `/latest` mirror of
+ * whichever dated release currently holds that title — rather than a fixed,
+ * permanent record. Rendered as a `:latest` suffix directly after the name,
+ * mirroring the familiar Docker image-tag convention (`name:latest`) instead
+ * of a separate, competing pill shape.
  */
-export function LatestAliasPill(): React.JSX.Element {
+export function LatestTag(): React.JSX.Element {
   return (
     <span
-      className="stac-pill stac-pill--moving"
+      className="stac-latest-tag"
       title={translate({
         id: 'stac.latestAlias.tooltip',
         message: 'Always points to the current release — not a fixed page.',
       })}
     >
-      <Translate id="stac.latestAlias.pill">Moving tag</Translate>
+      :<Translate id="stac.latestAlias.tag">latest</Translate>
     </span>
   );
 }
@@ -322,8 +323,10 @@ function ChildLink({child}: {child: StacChildRef}): React.JSX.Element {
   return (
     <Link to={child.routePath} className="stac-child-list__link">
       <TypeBadge type={child.type} />
-      <span className="stac-child-list__title">{child.title}</span>
-      {child.isLatestAlias && <LatestAliasPill />}
+      <span className="stac-child-list__title">
+        {child.title}
+        {child.isLatestAlias && <LatestTag />}
+      </span>
     </Link>
   );
 }

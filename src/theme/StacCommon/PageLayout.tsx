@@ -3,7 +3,7 @@ import {translate} from '@docusaurus/Translate';
 
 import type {StacNode} from '../../types.js';
 import StacSidebar from '../StacSidebar/index.js';
-import {LatestAliasPill, TypeBadge} from './index.js';
+import {LatestTag, TypeBadge} from './index.js';
 
 /**
  * The shared page scaffold used by every STAC page (Catalog, Collection,
@@ -43,9 +43,10 @@ export function PageShell({
 }
 
 /**
- * The shared page header: type badge, an optional "moving tag" pill for
- * `/latest` aliases, the title, and the id (shown only when it differs from
- * the title). Items additionally surface their parent collection id.
+ * The shared page header: type badge, the title (with a Docker-style
+ * `:latest` suffix for `/latest` aliases), and the id (shown only when it
+ * differs from the title). Items additionally surface their parent
+ * collection id.
  */
 export function PageHeader({
   node,
@@ -58,9 +59,11 @@ export function PageHeader({
     <header className="stac-header">
       <div className="stac-header__badges">
         <TypeBadge type={node.type} />
-        {node.isLatestAlias && <LatestAliasPill />}
       </div>
-      <h1 className="stac-title">{node.title}</h1>
+      <h1 className="stac-title">
+        {node.title}
+        {node.isLatestAlias && <LatestTag />}
+      </h1>
       {(node.id !== node.title || collection) && (
         <div className="stac-header__meta">
           {node.id !== node.title && <code className="stac-id">{node.id}</code>}
