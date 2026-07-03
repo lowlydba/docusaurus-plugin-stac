@@ -149,6 +149,34 @@ explicit and spec-compliant, matching the pattern used by
 [STAC Browser](https://github.com/radiantearth/stac-browser) and other
 STAC-aware clients.
 
+If you're authoring or updating your catalog with
+[`pystac`](https://pystac.readthedocs.io) (the Python STAC library - not to be
+confused with [`pystac-client`](https://pystac-client.readthedocs.io), which
+is for *querying* STAC APIs), this is a one-liner. `pystac` ships `RelType.ALTERNATE`
+and `MediaType.HTML` constants for exactly this purpose:
+
+```python
+import pystac
+
+collection = pystac.Collection.from_file("./stac/catalog.json")
+
+collection.add_link(
+    pystac.Link(
+        rel=pystac.RelType.ALTERNATE,
+        target="https://your-site.example/stac/collections/my-collection",
+        media_type=pystac.MediaType.HTML,
+        title="HTML version of this STAC Collection",
+    )
+)
+
+collection.save_object()
+```
+
+The same works on `pystac.Catalog` and `pystac.Item` objects. If you're
+generating many Items, add this link in the same step where you set each
+Item's `self` link, deriving the HTML `target` from the Item's id/collection
+the same way you derive its JSON path.
+
 ## Reference
 
 ### Plugin options
