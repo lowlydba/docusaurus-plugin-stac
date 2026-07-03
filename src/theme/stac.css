@@ -177,6 +177,27 @@
 .stac-kv tr:last-child td {
   border-bottom: none;
 }
+/* `overflow: hidden` on a <table> doesn't reliably clip cell backgrounds to
+ * the table's border-radius in every browser — especially once a <caption>
+ * is present, which sits inside the table's border box above the first row.
+ * Rounding the actual corner cells directly is the robust cross-browser fix,
+ * so the top/bottom corners of the key/value surface never render square. */
+.stac-kv tr:first-child th:first-child,
+.stac-kv tr:first-child td:first-child {
+  border-top-left-radius: var(--stac-radius-md);
+}
+.stac-kv tr:first-child th:last-child,
+.stac-kv tr:first-child td:last-child {
+  border-top-right-radius: var(--stac-radius-md);
+}
+.stac-kv tr:last-child th:first-child,
+.stac-kv tr:last-child td:first-child {
+  border-bottom-left-radius: var(--stac-radius-md);
+}
+.stac-kv tr:last-child th:last-child,
+.stac-kv tr:last-child td:last-child {
+  border-bottom-right-radius: var(--stac-radius-md);
+}
 /* Explicit cell backgrounds override Infima's default per-row striping so the
  * key/value columns read as two clean, consistent bands. */
 .stac-kv__key {

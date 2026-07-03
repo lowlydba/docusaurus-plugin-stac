@@ -25,8 +25,28 @@ export default function StacCollection({
 
   const spatial = stac.extent?.spatial?.bbox?.[0];
   const temporal = stac.extent?.temporal?.interval?.[0];
-  const fmtBound = (v: string | null | undefined): string =>
-    v == null ? '…' : formatFieldValue('datetime', v);
+  // A null start/end bound is a normal, spec-sanctioned STAC value (open-ended
+  // or ongoing collection) — render it as explicit wording instead of an
+  // ambiguous "…" placeholder that reads like missing/broken data.
+  const temporalText = (() => {
+    if (!temporal) return undefined;
+    const [start, end] = temporal;
+    if (start == null && end == null) {
+      return translate({
+        id: 'stac.collection.temporal.unspecified',
+        message: 'Not specified',
+      });
+    }
+    const startText =
+      start == null
+        ? translate({id: 'stac.collection.temporal.openStart', message: 'Open start'})
+        : formatFieldValue('datetime', start);
+    const endText =
+      end == null
+        ? translate({id: 'stac.collection.temporal.ongoing', message: 'Present (ongoing)'})
+        : formatFieldValue('datetime', end);
+    return `${startText} — ${endText}`;
+  })();
 
   const summary: [string, unknown][] = [
     [translate({id: 'stac.collection.license', message: 'License'}), stac.license],
@@ -40,7 +60,7 @@ export default function StacCollection({
     ],
     [
       translate({id: 'stac.collection.temporal', message: 'Temporal extent'}),
-      temporal ? `${fmtBound(temporal[0])} — ${fmtBound(temporal[1])}` : undefined,
+      temporalText,
     ],
     [
       translate({id: 'stac.collection.providers', message: 'Providers'}),

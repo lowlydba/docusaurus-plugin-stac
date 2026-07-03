@@ -123,6 +123,39 @@ describe('StacCollection', () => {
     expect(screen.getByText('Item 1')).toBeInTheDocument();
   });
 
+  it('renders clear wording for open-ended and unspecified temporal extents', () => {
+    const ongoing = baseNode({
+      type: 'Collection',
+      routePath: '/stac/ongoing',
+      title: 'Ongoing',
+      stac: {
+        id: 'coll',
+        links: [],
+        extent: {temporal: {interval: [['2020-01-01', null]]}},
+      } as StacNode['stac'],
+    });
+    const {unmount} = render(<StacCollection data={pageData(ongoing)} />);
+    expect(
+      screen.getByText('2020-01-01 00:00:00 UTC — Present (ongoing)'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/…/)).not.toBeInTheDocument();
+    unmount();
+
+    const unspecified = baseNode({
+      type: 'Collection',
+      routePath: '/stac/unspecified',
+      title: 'Unspecified',
+      stac: {
+        id: 'coll',
+        links: [],
+        extent: {temporal: {interval: [[null, null]]}},
+      } as StacNode['stac'],
+    });
+    render(<StacCollection data={pageData(unspecified)} />);
+    expect(screen.getByText('Not specified')).toBeInTheDocument();
+    expect(screen.queryByText(/…/)).not.toBeInTheDocument();
+  });
+
   it('handles a collection without extent/providers', () => {
     const node = baseNode({
       type: 'Collection',
