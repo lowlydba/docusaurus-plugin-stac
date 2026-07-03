@@ -722,6 +722,15 @@
   overflow: hidden;
   border: 1px solid var(--stac-border-color);
 }
+.stac-bbox {
+  margin-top: var(--stac-gap-sm);
+}
+.stac-bbox__copy {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--stac-gap-xs);
+  margin-top: 0.35rem;
+}
 
 .stac-empty {
   color: var(--ifm-color-emphasis-600);

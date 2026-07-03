@@ -129,12 +129,14 @@ function MapImpl({node, map}: StacMapProps): React.JSX.Element {
 }
 
 export default function StacMap({node, map}: StacMapProps): React.JSX.Element | null {
+  const bbox = itemBbox(node);
   if (!map.enabled) {
-    return <FootprintText bbox={itemBbox(node)} />;
+    return <FootprintText bbox={bbox} />;
   }
   return (
-    <BrowserOnly fallback={<FootprintText bbox={itemBbox(node)} />}>
-      {() => <MapImpl node={node} map={map} />}
-    </BrowserOnly>
+    <>
+      <BrowserOnly>{() => <MapImpl node={node} map={map} />}</BrowserOnly>
+      <FootprintText bbox={bbox} />
+    </>
   );
 }
