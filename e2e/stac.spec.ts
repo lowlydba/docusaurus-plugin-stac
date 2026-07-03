@@ -35,7 +35,7 @@ test.describe('docusaurus-plugin-stac example site', () => {
   test('collection page paginates its items', async ({page}) => {
     await page.goto(COLLECTION, {waitUntil: 'networkidle'});
     await expect(page.getByRole('heading', {name: 'Sentinel-2 Sample'})).toBeVisible();
-    // itemsPerPage=3 with 4 items → pagination controls appear.
+    // itemsPerPage=6 with 12 items → pagination controls appear.
     await expect(page.getByText(/Page 1 of 2/)).toBeVisible();
     await shot(page, 'collection');
 
@@ -46,9 +46,9 @@ test.describe('docusaurus-plugin-stac example site', () => {
 
   test('collection lists every item in the DOM (crawlable pagination)', async ({page}) => {
     await page.goto(COLLECTION, {waitUntil: 'networkidle'});
-    // All four items are present in the markup even though only three show.
+    // All twelve items are present in the markup even though only six show.
     const items = page.locator('.stac-child-list__item');
-    await expect(items).toHaveCount(4);
+    await expect(items).toHaveCount(12);
   });
 
   test('item page renders properties, assets and a footprint map', async ({page}) => {

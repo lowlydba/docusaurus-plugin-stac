@@ -28,8 +28,9 @@ if (pmtilesUrl) {
 const stacOptions = {
   path: catalogPath,
   routeBasePath: '/stac',
-  // Small page size so the demo exercises pagination with only a few items.
-  itemsPerPage: 3,
+  // Page size for the demo; small enough that the 12-item sample still
+  // exercises pagination, large enough to show a useful list at a glance.
+  itemsPerPage: 6,
   search: true,
   map,
 };
@@ -87,7 +88,7 @@ const config = {
       },
       footer: {
         style: 'dark',
-        copyright: `Built with docusaurus-plugin-stac.`,
+        copyright: `Built with <a href="https://github.com/lowlydba/docusaurus-plugin-stac">docusaurus-plugin-stac</a>.`,
       },
     }),
 };

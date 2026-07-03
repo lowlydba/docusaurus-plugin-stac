@@ -11,6 +11,7 @@ import {
   LazyChildList,
   TypeBadge,
 } from '../StacCommon/index.js';
+import {formatFieldValue} from '../../fields/registry.js';
 
 export default function StacCollection({
   data,
@@ -22,6 +23,8 @@ export default function StacCollection({
 
   const spatial = stac.extent?.spatial?.bbox?.[0];
   const temporal = stac.extent?.temporal?.interval?.[0];
+  const fmtBound = (v: string | null | undefined): string =>
+    v == null ? '…' : formatFieldValue('datetime', v);
 
   const summary: [string, unknown][] = [
     [translate({id: 'stac.collection.license', message: 'License'}), stac.license],
@@ -35,7 +38,7 @@ export default function StacCollection({
     ],
     [
       translate({id: 'stac.collection.temporal', message: 'Temporal extent'}),
-      temporal ? `${temporal[0] ?? '…'} — ${temporal[1] ?? '…'}` : undefined,
+      temporal ? `${fmtBound(temporal[0])} — ${fmtBound(temporal[1])}` : undefined,
     ],
     [
       translate({id: 'stac.collection.providers', message: 'Providers'}),
