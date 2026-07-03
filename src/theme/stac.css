@@ -4,8 +4,9 @@
  * radii, spacing steps, surface/border colors and a small badge palette are
  * defined here and reused by every component below. This avoids the "scattering
  * of pill shapes/sizes/colors" that creeps in when each block invents its own
- * values. All tokens derive from Infima (`--ifm-*`) variables so they adapt to
- * light/dark themes automatically. */
+ * values. The color/surface/border tokens derive from Infima (`--ifm-*`)
+ * variables so they adapt to light/dark themes automatically; the radii, spacing
+ * and badge colors are fixed values shared across all components. */
 .stac-page {
   max-width: 960px;
 
@@ -79,7 +80,10 @@
 .stac-id {
   font-family: var(--ifm-font-family-monospace);
 }
-.stac-collection-ref {
+.stac-collection-ref,
+.stac-assets__type {
+  /* Media types and collection refs can be long; let them wrap instead of
+   * forcing horizontal overflow on narrow viewports. */
   white-space: normal;
 }
 .stac-description {

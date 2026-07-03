@@ -56,7 +56,7 @@ export default function pluginStac(
       // Throttled progress: for large or remote catalogs the crawl can run for
       // minutes with no output, which looks like a hang. Emit a heartbeat at
       // most every ~1.5s (and never for tiny local catalogs that finish first).
-      let lastLoggedAt = 0;
+      let lastLoggedAt = startedAt;
       let lastLoggedCount = 0;
 
       const content = await walkCatalog(rootSource, {
