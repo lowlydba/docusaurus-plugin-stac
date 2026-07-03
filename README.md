@@ -14,9 +14,15 @@ footprint map - no server, no headless-browser prerendering, no SPA runtime.
 This README is organized around the four things you might need:
 
 - **[Tutorial](#tutorial-getting-started)** - install it and generate your first pages.
-- **[How-to guides](#how-to-guides)** - accomplish specific tasks (disable maps, swizzle components, run the demo, handle large catalogs).
+- **[How-to guides](#how-to-guides)** - accomplish specific tasks (disable maps, swizzle components, run the demo, handle large catalogs, link back from your STAC JSON).
 - **[Reference](#reference)** - plugin and map option tables.
 - **[Explanation](#explanation-why-this-exists)** - why this plugin exists and how it works internally.
+
+> [!TIP]
+> The STAC spec's own [best practices document](https://github.com/radiantearth/stac-spec/blob/master/best-practices.md#using-relation-types)
+> recommends every Item/Collection link to an HTML version of itself via
+> `"rel": "alternate", "type": "text/html"`. This plugin is exactly the tool
+> that generates that HTML - see [Link back to this plugin from your STAC JSON](#link-back-to-this-plugin-from-your-stac-json).
 
 ## Demo
 
@@ -116,6 +122,33 @@ npm run build --workspace example   # builds the demo site into example/build
 
 Then open `example/build/stac/index.html` (or `npm run serve --workspace example`).
 
+### Link back to this plugin from your STAC JSON
+
+Every generated page already links *forward* to its source JSON via
+`<link rel="alternate" type="application/json">` in the page `<head>` (see
+[How it works](#how-it-works)). The STAC spec's
+[best practices document](https://github.com/radiantearth/stac-spec/blob/master/best-practices.md#using-relation-types)
+recommends the reverse direction too: your Catalog/Collection/Item JSON should
+link *to* its HTML rendering with `"rel": "alternate", "type": "text/html"`, so
+API clients and STAC-aware tools know a human-browsable page exists:
+
+```json
+{
+  "rel": "alternate",
+  "type": "text/html",
+  "href": "https://your-site.example/stac/collections/my-collection",
+  "title": "HTML version of this STAC Collection"
+}
+```
+
+The `href` is the same route this plugin generates for that node
+(`routeBasePath` + the node's path, e.g. `/stac/collections/my-collection`).
+Adding this link is optional - the plugin works fine without it - but it makes
+the relationship between your static JSON and this plugin's HTML output
+explicit and spec-compliant, matching the pattern used by
+[STAC Browser](https://github.com/radiantearth/stac-browser) and other
+STAC-aware clients.
+
 ## Reference
 
 ### Plugin options
@@ -168,7 +201,15 @@ a STAC catalog can be implemented in a completely "static" manner as a group
 of hyperlinked Catalog, Collection, and Item files, letting data publishers
 expose their data as a browsable set of files without deploying an API or
 database. HTML rendering isn't part of that core spec - it's left to
-downstream tooling.
+downstream tooling. That said, the spec's own
+[best practices document](https://github.com/radiantearth/stac-spec/blob/master/best-practices.md#using-relation-types)
+explicitly anticipates and endorses HTML tooling like this plugin: its link
+`rel` types table recommends every Item/Collection JSON carry an `"alternate"`
+link with `"type": "text/html"` pointing at a human-browsable rendering of
+that record, a convention added in the spec's
+[1.0.0 changelog](https://github.com/radiantearth/stac-spec/blob/master/CHANGELOG.md).
+This plugin generates exactly that HTML target - see
+[Link back to this plugin from your STAC JSON](#link-back-to-this-plugin-from-your-stac-json).
 
 That downstream tool turned out to be [STAC Browser](https://github.com/radiantearth/stac-browser),
 a Vue single-page application that renders STAC JSON into an interactive UI.
