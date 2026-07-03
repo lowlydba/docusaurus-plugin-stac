@@ -8,6 +8,7 @@ import type {
   StacChildRef,
   StacItem,
   StacLazyChildRef,
+  StacLink,
   StacNode,
   StacObject,
 } from '../../types.js';
@@ -119,6 +120,53 @@ export function bboxToWkt(bbox: number[]): string {
     .map(([x, y]) => `${x} ${y}`)
     .join(', ');
   return `POLYGON((${ring}))`;
+}
+
+/**
+ * STAC's `license` string field is officially required on Collections, but
+ * catalogs frequently express (or supplement) licensing purely through one or
+ * more `rel: "license"` links instead — e.g. when terms vary per dataset/theme
+ * and a single SPDX id can't capture that, or the field was simply omitted.
+ * Extract those links from any node's `links` array (Catalog, Collection or
+ * Item — all can carry them).
+ */
+export function licenseLinks(links: StacLink[] | undefined): StacLink[] {
+  return (links ?? []).filter(
+    (l) => l?.rel === 'license' && typeof l.href === 'string',
+  );
+}
+
+/**
+ * Renders a node's license: the plain SPDX-style `license` string (if set)
+ * alongside any `rel: "license"` links (full terms/attribution). Returns
+ * `null` when neither is present, so callers can drop the row/section
+ * entirely rather than showing an empty "License" label.
+ */
+export function LicenseValue({
+  license,
+  links,
+}: {
+  license?: string;
+  links?: StacLink[];
+}): React.JSX.Element | null {
+  const linkList = licenseLinks(links);
+  if (!license && linkList.length === 0) return null;
+  return (
+    <span className="stac-license">
+      {license && <span className="stac-license__id">{license}</span>}
+      {linkList.map((l) => (
+        <a
+          key={l.href}
+          href={l.href}
+          target="_blank"
+          rel="noreferrer noopener"
+          className="stac-license__link"
+        >
+          {l.title || l.href}
+        </a>
+      ))}
+    </span>
+  );
 }
 
 /** Last path segment of an href, ignoring query/fragment. */
@@ -601,7 +649,11 @@ export function KeyValueTable({
               {k}
             </th>
             <td className="stac-kv__value">
-              {isNestedObject(v) ? <JsonBlock value={v} /> : formatValue(v)}
+              {React.isValidElement(v)
+                ? v
+                : isNestedObject(v)
+                  ? <JsonBlock value={v} />
+                  : formatValue(v)}
             </td>
           </tr>
         ))}

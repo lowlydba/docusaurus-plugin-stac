@@ -9,8 +9,10 @@ import {
   ChildList,
   KeyValueTable,
   LazyChildList,
+  LicenseValue,
   SourceJsonLink,
   StacHead,
+  licenseLinks,
 } from '../StacCommon/index.js';
 import {PageHeader, PageShell} from '../StacCommon/PageLayout.js';
 import {formatFieldValue} from '../../fields/registry.js';
@@ -48,8 +50,13 @@ export default function StacCollection({
     return `${startText} — ${endText}`;
   })();
 
+  const hasLicense = Boolean(stac.license) || licenseLinks(stac.links).length > 0;
+
   const summary: [string, unknown][] = [
-    [translate({id: 'stac.collection.license', message: 'License'}), stac.license],
+    [
+      translate({id: 'stac.collection.license', message: 'License'}),
+      hasLicense ? <LicenseValue license={stac.license} links={stac.links} /> : undefined,
+    ],
     [
       translate({id: 'stac.collection.keywords', message: 'Keywords'}),
       stac.keywords?.join(', '),

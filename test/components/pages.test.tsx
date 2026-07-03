@@ -97,6 +97,28 @@ describe('StacCatalog', () => {
       screen.queryByPlaceholderText('Search the catalog…'),
     ).not.toBeInTheDocument();
   });
+
+  it('renders a rel:"license" link when the catalog carries one', () => {
+    const node = baseNode({
+      type: 'Catalog',
+      routePath: '/stac',
+      title: 'Root Catalog',
+      stac: {
+        id: 'root',
+        links: [
+          {
+            rel: 'license',
+            href: 'https://docs.overturemaps.org/attribution/',
+            title: 'Overture Maps Attribution and Licensing',
+          },
+        ],
+      } as StacNode['stac'],
+    });
+    render(<StacCatalog data={pageData(node)} />);
+    expect(
+      screen.getByRole('link', {name: 'Overture Maps Attribution and Licensing'}),
+    ).toHaveAttribute('href', 'https://docs.overturemaps.org/attribution/');
+  });
 });
 
 describe('StacCollection', () => {
@@ -177,6 +199,34 @@ describe('StacCollection', () => {
     render(<StacCollection data={pageData(node)} />);
     expect(screen.getByRole('heading', {name: 'Bare'})).toBeInTheDocument();
     expect(screen.getByText('Items (0)')).toBeInTheDocument();
+    // No `license` field and no `rel: "license"` link → the row is dropped
+    // entirely rather than showing an empty "License" label.
+    expect(screen.queryByText('License')).not.toBeInTheDocument();
+  });
+
+  it('renders a rel:"license" link even when the license field itself is absent', () => {
+    // Some catalogs (e.g. Overture) omit the (spec-required) `license` string
+    // and rely solely on a `rel: "license"` link for terms/attribution.
+    const node = baseNode({
+      type: 'Collection',
+      routePath: '/stac/coll',
+      title: 'Link-only license',
+      stac: {
+        id: 'coll',
+        links: [
+          {
+            rel: 'license',
+            href: 'https://docs.overturemaps.org/attribution/',
+            title: 'Overture Maps Attribution and Licensing',
+          },
+        ],
+      } as StacNode['stac'],
+    });
+    render(<StacCollection data={pageData(node)} />);
+    const link = screen.getByRole('link', {
+      name: 'Overture Maps Attribution and Licensing',
+    });
+    expect(link).toHaveAttribute('href', 'https://docs.overturemaps.org/attribution/');
   });
 });
 
@@ -236,6 +286,31 @@ describe('StacItem', () => {
     // Title is present, but there is no separate `.stac-id` chip repeating it.
     expect(screen.getByRole('heading', {name: '00021'})).toBeInTheDocument();
     expect(container.querySelector('.stac-id')).toBeNull();
+  });
+
+  it('renders a rel:"license" link when the item itself carries one', () => {
+    // STAC scopes `license` to the Collection by default, but allows a
+    // per-Item override — surface it if a catalog sets it directly on Items.
+    const node = baseNode({
+      type: 'Item',
+      routePath: '/stac/item',
+      title: 'Licensed item',
+      stac: {
+        id: 'item',
+        links: [
+          {
+            rel: 'license',
+            href: 'https://docs.overturemaps.org/attribution/',
+            title: 'Overture Maps Attribution and Licensing',
+          },
+        ],
+        assets: {},
+      } as StacNode['stac'],
+    });
+    render(<StacItem data={pageData(node)} />);
+    expect(
+      screen.getByRole('link', {name: 'Overture Maps Attribution and Licensing'}),
+    ).toHaveAttribute('href', 'https://docs.overturemaps.org/attribution/');
   });
 
   it('renders a nested object property as a highlighted JSON block', () => {
