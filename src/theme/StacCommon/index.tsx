@@ -17,8 +17,9 @@ import {
   hasFieldFormatter,
 } from '../../fields/registry.js';
 import {JsonBlock} from './JsonBlock.js';
-import {CopyLinkButton} from './CopyButton.js';
-import {StorageSchemesValue} from './StorageSchemes.js';
+import {CopyLinkButton, CopyTextButton} from './CopyButton.js';
+import {StorageSchemesValue, detectStorageProvider} from './StorageSchemes.js';
+import {ProviderIcon} from './ProviderIcons.js';
 import {isPlainObject} from '../../utils.js';
 
 export {CopyLinkButton} from './CopyButton.js';
@@ -90,6 +91,34 @@ export function stacBbox(stac: unknown): number[] | undefined {
     return s.bbox.slice(0, 4);
   }
   return bboxFromGeometry(s.geometry);
+}
+
+/** `[west, south, east, north]` as a GeoJSON/STAC-style bbox array literal —
+ * the format most useful for pasting back into JSON or a script. */
+export function bboxToGeoJson(bbox: number[]): string {
+  return `[${bbox.join(', ')}]`;
+}
+
+/** `[west, south, east, north]` as a comma-separated string — the format
+ * STAC/OGC API `bbox` query parameters expect. */
+export function bboxToApiParam(bbox: number[]): string {
+  return bbox.join(',');
+}
+
+/** `[west, south, east, north]` as a WKT POLYGON, for pasting into GIS tools
+ * (QGIS, PostGIS, Shapely, etc.) that don't accept a bbox directly. */
+export function bboxToWkt(bbox: number[]): string {
+  const [w, s, e, n] = bbox;
+  const ring = [
+    [w, s],
+    [e, s],
+    [e, n],
+    [w, n],
+    [w, s],
+  ]
+    .map(([x, y]) => `${x} ${y}`)
+    .join(', ');
+  return `POLYGON((${ring}))`;
 }
 
 /** Last path segment of an href, ignoring query/fragment. */
@@ -634,12 +663,14 @@ export function AssetList({
         {entries.map(([key, asset]) => {
           const name = asset.title ?? key;
           const ext = assetExtension(asset.href);
+          const provider = detectStorageProvider(key, {}, asset.href);
           const hasMeta =
             Boolean(asset.type) ||
             (Array.isArray(asset.roles) && asset.roles.length > 0);
           return (
             <li key={key} className="stac-assets__item">
               <div className="stac-download">
+                {provider !== 'generic' && <ProviderIcon provider={provider} />}
                 <DownloadLink
                   href={asset.href}
                   className="stac-assets__link"
@@ -687,7 +718,9 @@ export function AssetList({
   );
 }
 
-/** Text-only footprint, used when the map is disabled or unavailable. */
+/** Text-only footprint, showing the bbox and copyable formats for GIS/API
+ * use. Always rendered below the map (in addition to the map itself), and
+ * used alone when the map is disabled or unavailable. */
 export function FootprintText({
   bbox,
 }: {
@@ -704,17 +737,45 @@ export function FootprintText({
   }
   const [w, s, e, n] = bbox;
   return (
-    <table className="stac-kv">
-      <tbody>
-        <tr>
-          <th scope="row" className="stac-kv__key">
-            <Translate id="stac.footprint.bbox">Bounding box</Translate>
-          </th>
-          <td className="stac-kv__value">
-            W {w}, S {s}, E {e}, N {n}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div className="stac-bbox">
+      <table className="stac-kv">
+        <tbody>
+          <tr>
+            <th scope="row" className="stac-kv__key">
+              <Translate id="stac.footprint.bbox">Bounding box</Translate>
+            </th>
+            <td className="stac-kv__value">
+              W {w}, S {s}, E {e}, N {n}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div className="stac-bbox__copy">
+        <CopyTextButton
+          text={bboxToGeoJson(bbox)}
+          label={translate({
+            id: 'stac.footprint.copyGeoJson',
+            message: 'Copy bounding box as a GeoJSON/STAC array',
+          })}
+          actionLabel="GeoJSON"
+        />
+        <CopyTextButton
+          text={bboxToApiParam(bbox)}
+          label={translate({
+            id: 'stac.footprint.copyApiParam',
+            message: 'Copy bounding box as a STAC/OGC API bbox parameter',
+          })}
+          actionLabel="API param"
+        />
+        <CopyTextButton
+          text={bboxToWkt(bbox)}
+          label={translate({
+            id: 'stac.footprint.copyWkt',
+            message: 'Copy bounding box as WKT',
+          })}
+          actionLabel="WKT"
+        />
+      </div>
+    </div>
   );
 }

@@ -108,19 +108,24 @@ export function CopyButton({
 export function CopyTextButton({
   text,
   label,
+  actionLabel,
 }: {
   text: string;
   label: string;
+  actionLabel?: string;
 }): React.JSX.Element {
   return (
     <CopyButton
       getText={() => text}
       label={label}
-      actionLabel={translate({
-        id: 'stac.copyText.action',
-        message: 'Copy',
-        description: 'Label for a generic copy-value button',
-      })}
+      actionLabel={
+        actionLabel ??
+        translate({
+          id: 'stac.copyText.action',
+          message: 'Copy',
+          description: 'Label for a generic copy-value button',
+        })
+      }
     />
   );
 }

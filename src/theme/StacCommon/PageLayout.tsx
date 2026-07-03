@@ -56,20 +56,26 @@ export function PageHeader({
 }): React.JSX.Element {
   return (
     <header className="stac-header">
-      <TypeBadge type={node.type} />
-      {node.isLatestAlias && <LatestAliasPill />}
+      <div className="stac-header__badges">
+        <TypeBadge type={node.type} />
+        {node.isLatestAlias && <LatestAliasPill />}
+      </div>
       <h1 className="stac-title">{node.title}</h1>
-      {node.id !== node.title && <code className="stac-id">{node.id}</code>}
-      {collection && (
-        <span
-          className="stac-collection-ref"
-          title={translate({
-            id: 'stac.item.collectionTitle',
-            message: 'Collection',
-          })}
-        >
-          {collection}
-        </span>
+      {(node.id !== node.title || collection) && (
+        <div className="stac-header__meta">
+          {node.id !== node.title && <code className="stac-id">{node.id}</code>}
+          {collection && (
+            <span
+              className="stac-collection-ref"
+              title={translate({
+                id: 'stac.item.collectionTitle',
+                message: 'Collection',
+              })}
+            >
+              {collection}
+            </span>
+          )}
+        </div>
       )}
     </header>
   );
