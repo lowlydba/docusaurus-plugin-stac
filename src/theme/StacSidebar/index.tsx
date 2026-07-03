@@ -4,7 +4,7 @@ import Translate, {translate} from '@docusaurus/Translate';
 import {usePluginData} from '@docusaurus/useGlobalData';
 
 import type {StacGlobalData, StacNavNode} from '../../types.js';
-import {TypeBadge} from '../StacCommon/index.js';
+import {LatestAliasPill, TypeBadge} from '../StacCommon/index.js';
 
 /** routePaths from the tree root down to (and including) `target`, or an empty
  * set if `target` isn't found (e.g. stale/lazily-loaded data). */
@@ -65,6 +65,7 @@ function TreeNode({
         >
           <TypeBadge type={node.type} />
           <span className="stac-tree__title">{node.title}</span>
+          {node.isLatestAlias && <LatestAliasPill />}
         </Link>
       </div>
       {hasChildren && isExpanded && (

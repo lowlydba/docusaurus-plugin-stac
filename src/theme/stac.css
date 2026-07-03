@@ -282,6 +282,32 @@
   background: var(--stac-badge-item);
 }
 
+/* Latest-alias pill — visually distinct from the type-badge color system,
+   flags a page as a moving mirror (e.g. `/latest`) rather than a fixed,
+   permanent release. */
+.stac-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--stac-radius-pill);
+  vertical-align: middle;
+  cursor: default;
+}
+.stac-pill--moving {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+}
+[data-theme='dark'] .stac-pill--moving {
+  color: #fde68a;
+  background: rgba(146, 64, 14, 0.35);
+  border-color: rgba(253, 230, 138, 0.4);
+}
+
 /* Child list */
 .stac-child-list {
   list-style: none;

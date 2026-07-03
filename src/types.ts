@@ -94,6 +94,13 @@ export interface StacChildRef {
   type: StacNodeType;
   title: string;
   routePath: string;
+  /**
+   * True when this ref points at the generated `/latest` alias — a stable,
+   * pinned URL that mirrors whichever dated release is currently newest (see
+   * `StacNode.isLatestAlias`). Lets the UI mark it as a moving target rather
+   * than a fixed, permanent page.
+   */
+  isLatestAlias?: boolean;
 }
 
 /**
@@ -135,6 +142,14 @@ export interface StacNode {
   lazyChildren: StacLazyChildRef[];
   /** The raw STAC object (links rewritten to internal routes where resolved). */
   stac: StacObject;
+  /**
+   * True for every node in a generated `/latest` alias subtree — a mirror of
+   * whichever dated release is currently flagged `latest` in the source
+   * catalog, exposed at a stable route so links to it don't need updating as
+   * new releases replace the current one. Lets the UI mark these pages as a
+   * moving target rather than a fixed, permanent release.
+   */
+  isLatestAlias?: boolean;
 }
 
 /** The tree emitted by `loadContent`. */
@@ -287,4 +302,6 @@ export interface StacNavNode {
   title: string;
   routePath: string;
   children: StacNavNode[];
+  /** See `StacNode.isLatestAlias`. */
+  isLatestAlias?: boolean;
 }

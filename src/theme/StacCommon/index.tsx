@@ -299,6 +299,26 @@ export function TypeBadge({type}: {type: StacNode['type']}): React.JSX.Element {
   return <span className={`stac-badge ${TYPE_BADGE[type]}`}>{type}</span>;
 }
 
+/**
+ * Marks a page (or Contents/tree entry) as a moving alias — e.g. the `/latest`
+ * mirror of whichever dated release currently holds that title — rather than
+ * a fixed, permanent record. Distinct from `TypeBadge`, which conveys the
+ * STAC object kind, not its stability.
+ */
+export function LatestAliasPill(): React.JSX.Element {
+  return (
+    <span
+      className="stac-pill stac-pill--moving"
+      title={translate({
+        id: 'stac.latestAlias.tooltip',
+        message: 'Always points to the current release — not a fixed page.',
+      })}
+    >
+      <Translate id="stac.latestAlias.pill">Moving tag</Translate>
+    </span>
+  );
+}
+
 export function Breadcrumbs({
   node,
   routeBasePath,
@@ -338,9 +358,11 @@ function ChildLink({child}: {child: StacChildRef}): React.JSX.Element {
     <Link to={child.routePath} className="stac-child-list__link">
       <TypeBadge type={child.type} />
       <span className="stac-child-list__title">{child.title}</span>
+      {child.isLatestAlias && <LatestAliasPill />}
     </Link>
   );
 }
+
 
 /**
  * A crawlable, client-paginated list of child records. Every child is rendered

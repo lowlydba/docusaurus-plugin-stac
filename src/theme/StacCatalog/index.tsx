@@ -6,6 +6,7 @@ import type {StacPageData} from '../../types.js';
 import {
   Breadcrumbs,
   ChildList,
+  LatestAliasPill,
   LazyChildList,
   SourceJsonLink,
   StacHead,
@@ -37,6 +38,7 @@ export default function StacCatalog({
           <Breadcrumbs node={node} routeBasePath={routeBasePath} rootTitle={node.title} />
           <header className="stac-header">
             <TypeBadge type={node.type} />
+            {node.isLatestAlias && <LatestAliasPill />}
             <h1 className="stac-title">{node.title}</h1>
             {node.id !== node.title && (
               <code className="stac-id">{node.id}</code>

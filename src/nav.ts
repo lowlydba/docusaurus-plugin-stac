@@ -18,6 +18,7 @@ export function buildNavTree(content: StacContent): StacNavNode {
       type: node.type,
       title: node.title,
       routePath: node.routePath,
+      ...(node.isLatestAlias ? {isLatestAlias: true} : {}),
       children: node.children
         .map((c) => byRoute.get(c.routePath))
         .filter((n): n is StacNode => Boolean(n) && !seen.has(n!.routePath))

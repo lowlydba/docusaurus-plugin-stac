@@ -7,6 +7,7 @@ import type {StacItem as StacItemType, StacPageData} from '../../types.js';
 import {
   AssetList,
   Breadcrumbs,
+  LatestAliasPill,
   PropertiesTable,
   SourceJsonLink,
   StacHead,
@@ -37,6 +38,7 @@ export default function StacItem({
           <Breadcrumbs node={node} routeBasePath={routeBasePath} />
           <header className="stac-header">
             <TypeBadge type={node.type} />
+            {node.isLatestAlias && <LatestAliasPill />}
             <h1 className="stac-title">{node.title}</h1>
             {node.id !== node.title && (
               <code className="stac-id">{node.id}</code>

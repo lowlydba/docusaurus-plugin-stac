@@ -168,6 +168,13 @@ export async function walkCatalog(
   // "latest" child is already followed as a normal `child` link; we just
   // duplicate its already-fetched node data under a second route path.
   let latestChildRoutePath: string | undefined;
+  // Some sources additionally bake the moving-target label directly into the
+  // *dated* release's own title (e.g. Overture's current release object
+  // titles itself "Latest Overture Release", identically to the parent
+  // link) — confusing on what is otherwise a fixed, permanent page. When
+  // that's detected, the label is moved to the alias below and the dated
+  // original falls back to its stable id instead.
+  let latestAliasTitle: string | undefined;
 
   function normalizeSourceKey(source: string): string {
     return isHttp(source) ? source : pathToFileURL(source).toString();
@@ -254,22 +261,31 @@ export async function walkCatalog(
         isItem ? 'item' : 'child',
       );
       if (child) {
-        const ref: StacChildRef = {
-          id: child.id,
-          type: child.type,
-          title: child.title,
-          routePath: child.routePath,
-        };
-        node.children.push(ref);
-        if (isItem) itemCount++;
+        let refTitle = child.title;
 
         if (!latestChildRoutePath && isChild) {
           const linkStac = stac as {latest?: unknown};
           const isLatest =
             link.latest === true ||
             (typeof linkStac.latest === 'string' && linkStac.latest === child.id);
-          if (isLatest) latestChildRoutePath = child.routePath;
+          if (isLatest) {
+            latestChildRoutePath = child.routePath;
+            if (/latest/i.test(child.title)) {
+              latestAliasTitle = child.title;
+              child.title = child.id;
+              refTitle = child.id;
+            }
+          }
         }
+
+        const ref: StacChildRef = {
+          id: child.id,
+          type: child.type,
+          title: refTitle,
+          routePath: child.routePath,
+        };
+        node.children.push(ref);
+        if (isItem) itemCount++;
       }
     }
 
@@ -285,7 +301,7 @@ export async function walkCatalog(
   }
 
   if (latestChildRoutePath) {
-    appendLatestAlias(nodes, latestChildRoutePath, usedRoutePaths);
+    appendLatestAlias(nodes, latestChildRoutePath, usedRoutePaths, latestAliasTitle);
   }
 
   return {root, nodes};
@@ -298,11 +314,18 @@ export async function walkCatalog(
  * registration only — every node was already fetched once during the normal
  * crawl (the "latest" child is followed like any other `child` link), so no
  * extra network/filesystem reads happen here.
+ *
+ * The alias is also registered as a `StacChildRef` on the same parent that
+ * lists the dated release it mirrors, and every node in it is flagged
+ * `isLatestAlias`. Without this it would be a page that exists (routable,
+ * crawlable) but is never linked from a "Contents" list or the sidebar tree,
+ * since those are built purely from `children` refs.
  */
 function appendLatestAlias(
   nodes: StacNode[],
   sourceRoutePath: string,
   usedRoutePaths: Set<string>,
+  aliasTitle: string | undefined,
 ): void {
   const sourceNode = nodes.find((n) => n.routePath === sourceRoutePath);
   if (!sourceNode || sourceNode.parentRoutePath === undefined) return;
@@ -331,8 +354,25 @@ function appendLatestAlias(
       parentRoutePath:
         n.parentRoutePath !== undefined ? remap(n.parentRoutePath) : undefined,
       children: n.children.map((c) => ({...c, routePath: remap(c.routePath)})),
+      isLatestAlias: true,
     }),
   );
+  const aliasRoot = aliases.find((n) => n.routePath === aliasPrefix);
+  if (aliasRoot && aliasTitle) {
+    aliasRoot.title = aliasTitle;
+  }
+
   for (const alias of aliases) usedRoutePaths.add(alias.routePath);
   nodes.push(...aliases);
+
+  if (aliasRoot) {
+    const parentNode = nodes.find((n) => n.routePath === sourceNode.parentRoutePath);
+    parentNode?.children.push({
+      id: aliasRoot.id,
+      type: aliasRoot.type,
+      title: aliasRoot.title,
+      routePath: aliasRoot.routePath,
+      isLatestAlias: true,
+    });
+  }
 }
