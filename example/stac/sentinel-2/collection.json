@@ -5,21 +5,128 @@
   "title": "Sentinel-2 Sample",
   "description": "A small sample of Sentinel-2 scenes over the San Francisco Bay Area.",
   "license": "proprietary",
-  "keywords": ["sentinel-2", "msi", "optical"],
+  "keywords": [
+    "sentinel-2",
+    "msi",
+    "optical"
+  ],
   "extent": {
-    "spatial": {"bbox": [[-122.6, 37.6, -122.2, 37.9]]},
-    "temporal": {"interval": [["2021-01-01T00:00:00Z", "2021-12-31T23:59:59Z"]]}
+    "spatial": {
+      "bbox": [
+        [
+          -122.6,
+          37.6,
+          -122.2,
+          37.9
+        ]
+      ]
+    },
+    "temporal": {
+      "interval": [
+        [
+          "2021-01-01T00:00:00Z",
+          "2021-12-31T23:59:59Z"
+        ]
+      ]
+    }
   },
   "providers": [
-    {"name": "ESA", "roles": ["producer", "licensor"], "url": "https://www.esa.int"}
+    {
+      "name": "ESA",
+      "roles": [
+        "producer",
+        "licensor"
+      ],
+      "url": "https://www.esa.int"
+    }
   ],
   "links": [
-    {"rel": "root", "href": "../catalog.json", "type": "application/json"},
-    {"rel": "parent", "href": "../catalog.json", "type": "application/json"},
-    {"rel": "self", "href": "./collection.json", "type": "application/json"},
-    {"rel": "item", "href": "./item-sf.json", "type": "application/geo+json", "title": "San Francisco 2021-06-15"},
-    {"rel": "item", "href": "./item-oakland.json", "type": "application/geo+json", "title": "Oakland 2021-06-15"},
-    {"rel": "item", "href": "./item-berkeley.json", "type": "application/geo+json", "title": "Berkeley 2021-06-20"},
-    {"rel": "item", "href": "./item-sanjose.json", "type": "application/geo+json", "title": "San Jose 2021-06-10"}
+    {
+      "rel": "root",
+      "href": "../catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "./collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "item",
+      "href": "./item-sf.json",
+      "type": "application/geo+json",
+      "title": "San Francisco 2021-06-15"
+    },
+    {
+      "rel": "item",
+      "href": "./item-oakland.json",
+      "type": "application/geo+json",
+      "title": "Oakland 2021-06-15"
+    },
+    {
+      "rel": "item",
+      "href": "./item-berkeley.json",
+      "type": "application/geo+json",
+      "title": "Berkeley 2021-06-20"
+    },
+    {
+      "rel": "item",
+      "href": "./item-sanjose.json",
+      "type": "application/geo+json",
+      "title": "San Jose 2021-06-10"
+    },
+    {
+      "rel": "item",
+      "href": "./item-fremont.json",
+      "type": "application/geo+json",
+      "title": "Fremont 2021-06-12"
+    },
+    {
+      "rel": "item",
+      "href": "./item-paloalto.json",
+      "type": "application/geo+json",
+      "title": "Palo Alto 2021-06-18"
+    },
+    {
+      "rel": "item",
+      "href": "./item-richmond.json",
+      "type": "application/geo+json",
+      "title": "Richmond 2021-06-20"
+    },
+    {
+      "rel": "item",
+      "href": "./item-hayward.json",
+      "type": "application/geo+json",
+      "title": "Hayward 2021-06-15"
+    },
+    {
+      "rel": "item",
+      "href": "./item-dalycity.json",
+      "type": "application/geo+json",
+      "title": "Daly City 2021-06-10"
+    },
+    {
+      "rel": "item",
+      "href": "./item-sanmateo.json",
+      "type": "application/geo+json",
+      "title": "San Mateo 2021-06-18"
+    },
+    {
+      "rel": "item",
+      "href": "./item-redwoodcity.json",
+      "type": "application/geo+json",
+      "title": "Redwood City 2021-06-12"
+    },
+    {
+      "rel": "item",
+      "href": "./item-santaclara.json",
+      "type": "application/geo+json",
+      "title": "Santa Clara 2021-06-10"
+    }
   ]
 }

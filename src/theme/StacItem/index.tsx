@@ -8,6 +8,8 @@ import {
   AssetList,
   Breadcrumbs,
   PropertiesTable,
+  SourceJsonLink,
+  StacHead,
   TypeBadge,
 } from '../StacCommon/index.js';
 import StacMap from '../StacMap/index.js';
@@ -17,12 +19,13 @@ export default function StacItem({
 }: {
   data: StacPageData;
 }): React.JSX.Element {
-  const {node, routeBasePath, map} = data;
+  const {node, routeBasePath, map, jsonHref, jsonLd} = data;
   const stac = node.stac as StacItemType;
   const properties = stac.properties ?? {};
 
   return (
     <Layout title={node.title} description={String(properties.description ?? '')}>
+      <StacHead jsonHref={jsonHref} jsonLd={jsonLd} />
       <main className="container margin-vert--lg stac-page">
         <Breadcrumbs node={node} routeBasePath={routeBasePath} />
         <header className="stac-header">
@@ -40,6 +43,7 @@ export default function StacItem({
             </span>
           )}
         </header>
+        <SourceJsonLink jsonHref={jsonHref} />
 
         <section
           className="stac-map-section"

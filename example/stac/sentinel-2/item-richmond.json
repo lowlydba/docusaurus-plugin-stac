@@ -1,0 +1,88 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "id": "S2-RICHMOND-20210620",
+  "collection": "sentinel-2-sample",
+  "bbox": [
+    -122.4,
+    37.9,
+    -122.3,
+    37.98
+  ],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -122.4,
+          37.9
+        ],
+        [
+          -122.3,
+          37.9
+        ],
+        [
+          -122.3,
+          37.98
+        ],
+        [
+          -122.4,
+          37.98
+        ],
+        [
+          -122.4,
+          37.9
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "datetime": "2021-06-20T18:45:10Z",
+    "platform": "sentinel-2b",
+    "instruments": [
+      "msi"
+    ],
+    "eo:cloud_cover": 12.7,
+    "gsd": 10
+  },
+  "assets": {
+    "visual": {
+      "href": "https://example.com/data/S2-RICHMOND-20210620-visual.tif",
+      "title": "True color image",
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "visual"
+      ]
+    },
+    "thumbnail": {
+      "href": "https://example.com/data/S2-RICHMOND-20210620-thumb.png",
+      "title": "Thumbnail",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ]
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "./collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "collection",
+      "href": "./collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "./item-richmond.json",
+      "type": "application/geo+json"
+    }
+  ]
+}

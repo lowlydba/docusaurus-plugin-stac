@@ -41,6 +41,7 @@ export default defineConfig({
   resolve: {
     alias: [
       {find: '@theme/Layout', replacement: stub('test/mocks/Layout.tsx')},
+      {find: '@docusaurus/Head', replacement: stub('test/mocks/Head.tsx')},
       {find: '@docusaurus/Link', replacement: stub('test/mocks/Link.tsx')},
       {find: '@docusaurus/Translate', replacement: stub('test/mocks/Translate.tsx')},
       {

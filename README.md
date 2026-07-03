@@ -1,5 +1,9 @@
 # docusaurus-plugin-stac
 
+[![CI](https://github.com/lowlydba/docusaurus-plugin-stac/actions/workflows/ci.yml/badge.svg)](https://github.com/lowlydba/docusaurus-plugin-stac/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@lowlydba/docusaurus-plugin-stac?logo=npm)](https://www.npmjs.com/package/@lowlydba/docusaurus-plugin-stac)
+[![Built with Docusaurus](https://img.shields.io/badge/Built%20with-Docusaurus-3ECC5F?logo=docusaurus&logoColor=white)](https://docusaurus.io)
+
 A [Docusaurus](https://docusaurus.io) plugin that ingests a static
 [STAC](https://stacspec.org) (SpatioTemporal Asset Catalog) and generates **real,
 crawlable static HTML pages** for every Catalog, Collection and Item at build time.
@@ -26,10 +30,10 @@ Because Overture's collections hold hundreds of Items each, the demo sets
 
 ## Tutorial: getting started
 
-Install the plugin:
+Install the plugin from npm:
 
 ```bash
-npm install docusaurus-plugin-stac
+npm install @lowlydba/docusaurus-plugin-stac
 ```
 
 `maplibre-gl` and `pmtiles` ship as dependencies; `@docusaurus/core`, `react` and
@@ -43,7 +47,7 @@ collection JSON:
 module.exports = {
   plugins: [
     [
-      'docusaurus-plugin-stac',
+      '@lowlydba/docusaurus-plugin-stac',
       {
         // Required: path or URL to the root catalog/collection JSON.
         path: './stac/catalog.json',
@@ -73,7 +77,7 @@ Set `map: false` for users who don't have PMTiles access or don't want to build
 them - Item pages then render a text-only bounding-box footprint instead:
 
 ```js
-['docusaurus-plugin-stac', {path: './stac/catalog.json', map: false}]
+['@lowlydba/docusaurus-plugin-stac', {path: './stac/catalog.json', map: false}]
 ```
 
 If `map` is enabled but no `pmtilesUrl` / `style` is given, the map still draws

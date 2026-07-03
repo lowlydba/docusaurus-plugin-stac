@@ -14,6 +14,8 @@ import {
   PropertiesTable,
   AssetList,
   FootprintText,
+  StacHead,
+  SourceJsonLink,
 } from '../../src/theme/StacCommon/index.js';
 import type {StacChildRef, StacLazyChildRef, StacNode} from '../../src/types.js';
 
@@ -296,9 +298,86 @@ describe('AssetList', () => {
     expect(screen.getByText('data')).toBeInTheDocument();
   });
 
+  it('marks asset links as downloads and offers copy-link buttons', () => {
+    render(
+      <AssetList
+        assets={{
+          data: {href: 'https://cdn.test/scene/data.tif', title: 'Scene'},
+        }}
+      />,
+    );
+    // The link is presented as a download that opens in a new tab.
+    const link = screen.getByRole('link', {name: /scene/i});
+    expect(link).toHaveAttribute('href', 'https://cdn.test/scene/data.tif');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('title', 'Download Scene');
+    // File extension is surfaced.
+    expect(screen.getByText('TIF')).toBeInTheDocument();
+    // A copy-link button is present.
+    expect(
+      screen.getByRole('button', {name: /copy link to scene/i}),
+    ).toBeInTheDocument();
+  });
+
+  it('copies a resolved link to the clipboard when the copy button is clicked', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.assign(navigator, {clipboard: {writeText}});
+    render(
+      <AssetList
+        assets={{data: {href: 'https://cdn.test/scene/data.tif', title: 'Scene'}}}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', {name: /copy link to scene/i}));
+    await waitFor(() =>
+      expect(writeText).toHaveBeenCalledWith('https://cdn.test/scene/data.tif'),
+    );
+  });
+
   it('returns null when there are no assets', () => {
     const {container} = render(<AssetList assets={undefined} />);
     expect(container.querySelector('.stac-assets')).toBeNull();
+  });
+});
+
+describe('StacHead', () => {
+  it('emits an alternate JSON link and JSON-LD script', () => {
+    render(
+      <StacHead
+        jsonHref="https://cat.test/n.json"
+        jsonLd={{'@type': 'Dataset', name: 'N'}}
+      />,
+    );
+    const link = document.querySelector(
+      'link[rel="alternate"][href="https://cat.test/n.json"]',
+    );
+    expect(link).toHaveAttribute('type', 'application/json');
+    const script = document.querySelector(
+      'script[type="application/ld+json"]',
+    );
+    expect(script?.textContent).toContain('"name":"N"');
+  });
+
+  it('renders nothing without a jsonHref', () => {
+    const {container} = render(<StacHead jsonLd={{'@type': 'Dataset'}} />);
+    expect(container.querySelector('link')).toBeNull();
+    expect(container.querySelector('script')).toBeNull();
+  });
+});
+
+describe('SourceJsonLink', () => {
+  it('renders a download + copy control for the source JSON', () => {
+    render(<SourceJsonLink jsonHref="https://cat.test/n.json" />);
+    const link = screen.getByRole('link', {name: /view source json/i});
+    expect(link).toHaveAttribute('href', 'https://cat.test/n.json');
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(
+      screen.getByRole('button', {name: /copy link to stac json/i}),
+    ).toBeInTheDocument();
+  });
+
+  it('renders nothing without a jsonHref', () => {
+    const {container} = render(<SourceJsonLink />);
+    expect(container.querySelector('.stac-source-json')).toBeNull();
   });
 });
 

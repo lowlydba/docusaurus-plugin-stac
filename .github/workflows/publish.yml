@@ -1,0 +1,48 @@
+name: Publish
+
+# Publishes the package to the public npm registry when a GitHub Release is
+# published, or on manual dispatch. Authentication uses npm trusted publishing
+# (OIDC) — no long-lived token. The GitHub Actions OIDC identity must be
+# registered as a trusted publisher for this package on npmjs.com (repo +
+# workflow filename "publish.yml").
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: publish-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for trusted publishing (OIDC) + provenance
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          # Node 24 bundles npm >= 11.5.1, required for trusted publishing (OIDC).
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false # no cache to poison in a publish job
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build plugin
+        run: npm run build
+
+      # `prepublishOnly` re-runs clean+build; publish only the root package
+      # (the example workspace is private and is skipped automatically).
+      - name: Publish
+        run: npm publish

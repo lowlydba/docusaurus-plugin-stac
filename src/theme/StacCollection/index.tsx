@@ -9,19 +9,24 @@ import {
   ChildList,
   KeyValueTable,
   LazyChildList,
+  SourceJsonLink,
+  StacHead,
   TypeBadge,
 } from '../StacCommon/index.js';
+import {formatFieldValue} from '../../fields/registry.js';
 
 export default function StacCollection({
   data,
 }: {
   data: StacPageData;
 }): React.JSX.Element {
-  const {node, routeBasePath, itemsPerPage} = data;
+  const {node, routeBasePath, itemsPerPage, jsonHref, jsonLd} = data;
   const stac = node.stac as StacCollectionType;
 
   const spatial = stac.extent?.spatial?.bbox?.[0];
   const temporal = stac.extent?.temporal?.interval?.[0];
+  const fmtBound = (v: string | null | undefined): string =>
+    v == null ? '…' : formatFieldValue('datetime', v);
 
   const summary: [string, unknown][] = [
     [translate({id: 'stac.collection.license', message: 'License'}), stac.license],
@@ -35,7 +40,7 @@ export default function StacCollection({
     ],
     [
       translate({id: 'stac.collection.temporal', message: 'Temporal extent'}),
-      temporal ? `${temporal[0] ?? '…'} — ${temporal[1] ?? '…'}` : undefined,
+      temporal ? `${fmtBound(temporal[0])} — ${fmtBound(temporal[1])}` : undefined,
     ],
     [
       translate({id: 'stac.collection.providers', message: 'Providers'}),
@@ -45,6 +50,7 @@ export default function StacCollection({
 
   return (
     <Layout title={node.title} description={stac.description}>
+      <StacHead jsonHref={jsonHref} jsonLd={jsonLd} />
       <main className="container margin-vert--lg stac-page">
         <Breadcrumbs node={node} routeBasePath={routeBasePath} />
         <header className="stac-header">
@@ -52,6 +58,7 @@ export default function StacCollection({
           <h1 className="stac-title">{node.title}</h1>
           <code className="stac-id">{node.id}</code>
         </header>
+        <SourceJsonLink jsonHref={jsonHref} />
         {stac.description && <p className="stac-description">{stac.description}</p>}
 
         <KeyValueTable

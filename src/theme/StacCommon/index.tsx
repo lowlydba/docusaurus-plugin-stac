@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import Head from '@docusaurus/Head';
 import Link from '@docusaurus/Link';
 import Translate, {translate} from '@docusaurus/Translate';
 
@@ -78,15 +79,250 @@ export function stacBbox(stac: unknown): number[] | undefined {
   return bboxFromGeometry(s.geometry);
 }
 
+/** Last path segment of an href, ignoring query/fragment. */
+function assetFileName(href: string): string {
+  try {
+    const {pathname} = new URL(href, 'https://placeholder.invalid/');
+    return pathname.split('/').filter(Boolean).pop() ?? href;
+  } catch {
+    return href.split(/[?#]/)[0].split('/').filter(Boolean).pop() ?? href;
+  }
+}
+
+/** Short uppercase file extension (e.g. `TIF`) for a download href, if any. */
+function assetExtension(href: string): string | undefined {
+  const name = assetFileName(href);
+  const dot = name.lastIndexOf('.');
+  if (dot > 0 && dot < name.length - 1) {
+    const ext = name.slice(dot + 1);
+    if (/^[A-Za-z0-9]{1,8}$/.test(ext)) return ext.toUpperCase();
+  }
+  return undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Shared presentational components
 // ---------------------------------------------------------------------------
+
+function DownloadIcon({className}: {className?: string}): React.JSX.Element {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M12 3v12" />
+      <path d="m7 12 5 5 5-5" />
+      <path d="M5 21h14" />
+    </svg>
+  );
+}
+
+function CopyIcon({className}: {className?: string}): React.JSX.Element {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+    </svg>
+  );
+}
+
+function CheckIcon({className}: {className?: string}): React.JSX.Element {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+/**
+ * A link that makes it visually explicit it points at a downloadable file: it
+ * carries a download icon and opens in a new tab. Used for STAC assets and the
+ * raw source-JSON links.
+ */
+export function DownloadLink({
+  href,
+  label,
+  className,
+  children,
+}: {
+  href: string;
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <a
+      href={href}
+      className={`stac-download__link${className ? ` ${className}` : ''}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={label}
+    >
+      <DownloadIcon className="stac-download__icon" />
+      {children}
+    </a>
+  );
+}
+
+/**
+ * A small button that copies a (resolved, absolute) link to the clipboard, so a
+ * reader can grab the URL instead of triggering a download.
+ */
+export function CopyLinkButton({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}): React.JSX.Element {
+  const [copied, setCopied] = useState(false);
+  const copiedLabel = translate({
+    id: 'stac.copyLink.copied',
+    message: 'Copied',
+    description: 'Confirmation shown after copying a download link',
+  });
+  const actionLabel = translate({
+    id: 'stac.copyLink.action',
+    message: 'Copy link',
+    description: 'Label for the button that copies a download link',
+  });
+
+  const onCopy = (): void => {
+    let text = href;
+    try {
+      if (typeof window !== 'undefined') {
+        text = new URL(href, window.location.href).href;
+      }
+    } catch {
+      /* fall back to the raw href */
+    }
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          setCopied(true);
+          window.setTimeout(() => setCopied(false), 1500);
+        })
+        .catch(() => {
+          /* clipboard unavailable — ignore */
+        });
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className={`stac-copy${copied ? ' stac-copy--copied' : ''}`}
+      onClick={onCopy}
+      aria-label={label}
+      title={label}
+    >
+      {copied ? (
+        <CheckIcon className="stac-copy__icon" />
+      ) : (
+        <CopyIcon className="stac-copy__icon" />
+      )}
+      <span className="stac-copy__text" aria-hidden="true">
+        {copied ? copiedLabel : actionLabel}
+      </span>
+    </button>
+  );
+}
 
 const TYPE_BADGE: Record<StacNode['type'], string> = {
   Catalog: 'stac-badge--catalog',
   Collection: 'stac-badge--collection',
   Item: 'stac-badge--item',
 };
+
+/**
+ * Emits per-page machine-readable discovery metadata: an `alternate` link to the
+ * canonical STAC JSON and a schema.org `Dataset` JSON-LD block. Agents and search
+ * engines discover via the HTML page and can then consume the linked JSON.
+ */
+export function StacHead({
+  jsonHref,
+  jsonLd,
+}: {
+  jsonHref?: string;
+  jsonLd?: Record<string, unknown>;
+}): React.JSX.Element | null {
+  if (!jsonHref) return null;
+  return (
+    <Head>
+      <link rel="alternate" type="application/json" href={jsonHref} />
+      {jsonLd && (
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      )}
+    </Head>
+  );
+}
+
+/**
+ * A visible link to the page's canonical STAC JSON, with the same download +
+ * copy affordance used for assets, so humans and agents can grab the raw record.
+ */
+export function SourceJsonLink({
+  jsonHref,
+}: {
+  jsonHref?: string;
+}): React.JSX.Element | null {
+  if (!jsonHref) return null;
+  return (
+    <p className="stac-source-json stac-download">
+      <DownloadLink
+        href={jsonHref}
+        label={translate({
+          id: 'stac.sourceJson.download',
+          message: 'Download this record as STAC JSON',
+        })}
+      >
+        <Translate id="stac.sourceJson.view">View source JSON</Translate>
+      </DownloadLink>
+      <CopyLinkButton
+        href={jsonHref}
+        label={translate({
+          id: 'stac.sourceJson.copy',
+          message: 'Copy link to STAC JSON',
+        })}
+      />
+    </p>
+  );
+}
+
 
 export function TypeBadge({type}: {type: StacNode['type']}): React.JSX.Element {
   return <span className={`stac-badge ${TYPE_BADGE[type]}`}>{type}</span>;
@@ -327,9 +563,25 @@ function LazyItemCard({
             {'Could not load: {message}'}
           </Translate>
         </span>{' '}
-        <a href={child.href} className="stac-lazy__card-source">
-          <Translate id="stac.lazy.source">Source JSON</Translate>
-        </a>
+        <span className="stac-download stac-download--inline">
+          <DownloadLink
+            href={child.href}
+            className="stac-lazy__card-source"
+            label={translate({
+              id: 'stac.lazy.sourceDownload',
+              message: 'Download source JSON',
+            })}
+          >
+            <Translate id="stac.lazy.source">Source JSON</Translate>
+          </DownloadLink>
+          <CopyLinkButton
+            href={child.href}
+            label={translate({
+              id: 'stac.lazy.sourceCopy',
+              message: 'Copy link to source JSON',
+            })}
+          />
+        </span>
       </div>
     );
   }
@@ -357,9 +609,25 @@ function LazyItemCard({
       <PropertiesTable properties={properties} />
       <AssetList assets={stac.assets} />
       <FootprintText bbox={stacBbox(stac)} />
-      <a href={child.href} className="stac-lazy__card-source">
-        <Translate id="stac.lazy.source">Source JSON</Translate>
-      </a>
+      <span className="stac-download stac-download--inline">
+        <DownloadLink
+          href={child.href}
+          className="stac-lazy__card-source"
+          label={translate({
+            id: 'stac.lazy.sourceDownload',
+            message: 'Download source JSON',
+          })}
+        >
+          <Translate id="stac.lazy.source">Source JSON</Translate>
+        </DownloadLink>
+        <CopyLinkButton
+          href={child.href}
+          label={translate({
+            id: 'stac.lazy.sourceCopy',
+            message: 'Copy link to source JSON',
+          })}
+        />
+      </span>
     </div>
   );
 }
@@ -435,21 +703,57 @@ export function AssetList({
         <Translate id="stac.assets.title">Assets</Translate>
       </h2>
       <ul className="stac-assets__list">
-        {entries.map(([key, asset]) => (
-          <li key={key} className="stac-assets__item">
-            <a href={asset.href} className="stac-assets__link">
-              {asset.title ?? key}
-            </a>
-            {asset.type && (
-              <span className="stac-assets__type">{asset.type}</span>
-            )}
-            {Array.isArray(asset.roles) && asset.roles.length > 0 && (
-              <span className="stac-assets__roles">
-                {asset.roles.join(', ')}
-              </span>
-            )}
-          </li>
-        ))}
+        {entries.map(([key, asset]) => {
+          const name = asset.title ?? key;
+          const ext = assetExtension(asset.href);
+          const hasMeta =
+            Boolean(asset.type) ||
+            (Array.isArray(asset.roles) && asset.roles.length > 0);
+          return (
+            <li key={key} className="stac-assets__item">
+              <div className="stac-download">
+                <DownloadLink
+                  href={asset.href}
+                  className="stac-assets__link"
+                  label={translate(
+                    {
+                      id: 'stac.assets.download',
+                      message: 'Download {name}',
+                      description: 'Tooltip/label for a downloadable asset link',
+                    },
+                    {name},
+                  )}
+                >
+                  <span className="stac-download__name">{name}</span>
+                  {ext && <span className="stac-download__ext">{ext}</span>}
+                </DownloadLink>
+                <CopyLinkButton
+                  href={asset.href}
+                  label={translate(
+                    {
+                      id: 'stac.assets.copy',
+                      message: 'Copy link to {name}',
+                      description: 'Label for the copy-link button on an asset',
+                    },
+                    {name},
+                  )}
+                />
+              </div>
+              {hasMeta && (
+                <div className="stac-assets__meta">
+                  {asset.type && (
+                    <span className="stac-assets__type">{asset.type}</span>
+                  )}
+                  {Array.isArray(asset.roles) && asset.roles.length > 0 && (
+                    <span className="stac-assets__roles">
+                      {asset.roles.join(', ')}
+                    </span>
+                  )}
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );

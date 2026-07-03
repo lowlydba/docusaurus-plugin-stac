@@ -1,0 +1,88 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "id": "S2-REDWOODCITY-20210612",
+  "collection": "sentinel-2-sample",
+  "bbox": [
+    -122.26,
+    37.46,
+    -122.18,
+    37.52
+  ],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -122.26,
+          37.46
+        ],
+        [
+          -122.18,
+          37.46
+        ],
+        [
+          -122.18,
+          37.52
+        ],
+        [
+          -122.26,
+          37.52
+        ],
+        [
+          -122.26,
+          37.46
+        ]
+      ]
+    ]
+  },
+  "properties": {
+    "datetime": "2021-06-12T18:44:50Z",
+    "platform": "sentinel-2b",
+    "instruments": [
+      "msi"
+    ],
+    "eo:cloud_cover": 9.6,
+    "gsd": 10
+  },
+  "assets": {
+    "visual": {
+      "href": "https://example.com/data/S2-REDWOODCITY-20210612-visual.tif",
+      "title": "True color image",
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": [
+        "visual"
+      ]
+    },
+    "thumbnail": {
+      "href": "https://example.com/data/S2-REDWOODCITY-20210612-thumb.png",
+      "title": "Thumbnail",
+      "type": "image/png",
+      "roles": [
+        "thumbnail"
+      ]
+    }
+  },
+  "links": [
+    {
+      "rel": "root",
+      "href": "../catalog.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "parent",
+      "href": "./collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "collection",
+      "href": "./collection.json",
+      "type": "application/json"
+    },
+    {
+      "rel": "self",
+      "href": "./item-redwoodcity.json",
+      "type": "application/geo+json"
+    }
+  ]
+}

@@ -15,7 +15,7 @@ const maxItemsEnv = process.env.STAC_MAX_ITEMS;
 const maxItemsPerCollection = maxItemsEnv ? Number(maxItemsEnv) : undefined;
 const pmtilesUrl = process.env.STAC_PMTILES_URL || undefined;
 
-/** @type {import('docusaurus-plugin-stac').StacMapOptions} */
+/** @type {import('@lowlydba/docusaurus-plugin-stac').StacMapOptions} */
 const map = {height: 380};
 // Point the basemap at real Overture PMTiles when provided; the archive is read
 // directly in the browser via HTTP range requests (no tile server). Omit to
@@ -24,12 +24,13 @@ if (pmtilesUrl) {
   map.pmtilesUrl = pmtilesUrl;
 }
 
-/** @type {import('docusaurus-plugin-stac').StacPluginOptions} */
+/** @type {import('@lowlydba/docusaurus-plugin-stac').StacPluginOptions} */
 const stacOptions = {
   path: catalogPath,
   routeBasePath: '/stac',
-  // Small page size so the demo exercises pagination with only a few items.
-  itemsPerPage: 3,
+  // Page size for the demo; small enough that the 12-item sample still
+  // exercises pagination, large enough to show a useful list at a glance.
+  itemsPerPage: 6,
   search: true,
   map,
 };
@@ -74,7 +75,7 @@ const config = {
     ],
   ],
 
-  plugins: [['docusaurus-plugin-stac', stacOptions]],
+  plugins: [['@lowlydba/docusaurus-plugin-stac', stacOptions]],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
@@ -87,7 +88,7 @@ const config = {
       },
       footer: {
         style: 'dark',
-        copyright: `Built with docusaurus-plugin-stac.`,
+        copyright: `Built with <a href="https://github.com/lowlydba/docusaurus-plugin-stac">docusaurus-plugin-stac</a>.`,
       },
     }),
 };

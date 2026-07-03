@@ -115,7 +115,9 @@ describe('StacCollection', () => {
     expect(screen.getByText('CC-BY-4.0')).toBeInTheDocument();
     expect(screen.getByText('a, b')).toBeInTheDocument();
     expect(screen.getByText('-1, -2, 1, 2')).toBeInTheDocument();
-    expect(screen.getByText('2020-01-01 — 2020-12-31')).toBeInTheDocument();
+    expect(
+      screen.getByText('2020-01-01 00:00:00 UTC — 2020-12-31 00:00:00 UTC'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Acme')).toBeInTheDocument();
     expect(screen.getByText('Items (1)')).toBeInTheDocument();
     expect(screen.getByText('Item 1')).toBeInTheDocument();
