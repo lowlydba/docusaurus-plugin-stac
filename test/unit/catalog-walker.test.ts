@@ -120,6 +120,63 @@ describe('walkCatalog (filesystem fixture)', () => {
   });
 });
 
+describe('walkCatalog (latest-release alias)', () => {
+  const releasesRoot = path.resolve(dir, '../fixtures/releases/catalog.json');
+
+  it('mirrors the child link flagged latest:true under a sibling /latest route', async () => {
+    const {nodes} = await walkCatalog(releasesRoot, {
+      routeBasePath: '/stac',
+      maxDepth: Number.POSITIVE_INFINITY,
+    });
+
+    // The real dated routes are still present, unaffected.
+    expect(nodes.find((n) => n.id === '2024-01-01')?.routePath).toBe(
+      '/stac/2024-01-01',
+    );
+    expect(nodes.find((n) => n.id === '2024-02-01')?.routePath).toBe(
+      '/stac/2024-02-01',
+    );
+
+    // The latest-flagged release (2024-02-01) is mirrored at /stac/latest,
+    // and its descendants are remapped under that prefix too.
+    const aliasRoot = nodes.find(
+      (n) => n.id === '2024-02-01' && n.routePath === '/stac/latest',
+    );
+    expect(aliasRoot).toBeDefined();
+    expect(aliasRoot?.parentRoutePath).toBe('/stac');
+    expect(aliasRoot?.children).toEqual([
+      expect.objectContaining({id: 'addresses', routePath: '/stac/latest/addresses'}),
+    ]);
+
+    const aliasCollection = nodes.find(
+      (n) => n.id === 'addresses' && n.routePath === '/stac/latest/addresses',
+    );
+    expect(aliasCollection).toBeDefined();
+    expect(aliasCollection?.parentRoutePath).toBe('/stac/latest');
+    // The 2024-01-01 release (not flagged latest) is not duplicated.
+    expect(nodes.filter((n) => n.id === '2024-01-01')).toHaveLength(1);
+
+    // No extra fetches: the alias subtree reuses the already-crawled nodes,
+    // so the same STAC ids only ever appear twice (real + alias), never more.
+    expect(nodes.filter((n) => n.id === 'addresses')).toHaveLength(2);
+    expect(nodes.filter((n) => n.id === '2024-02-01')).toHaveLength(2);
+  });
+
+  it('skips aliasing when a real "latest" route already exists at that level', async () => {
+    // Regression guard: if a route already occupies the alias's target path,
+    // walkCatalog must not clobber it or throw.
+    const nodes1 = (
+      await walkCatalog(releasesRoot, {
+        routeBasePath: '/stac',
+        maxDepth: 0,
+      })
+    ).nodes;
+    // At maxDepth 0 only the root is crawled, so no "latest" child is ever
+    // visited/flagged — no alias should be produced.
+    expect(nodes1.some((n) => n.routePath === '/stac/latest')).toBe(false);
+  });
+});
+
 describe('walkCatalog (http, mocked fetch)', () => {
   afterEach(() => {
     vi.restoreAllMocks();

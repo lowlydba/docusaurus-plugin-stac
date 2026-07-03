@@ -1,0 +1,19 @@
+{
+  "type": "Catalog",
+  "stac_version": "1.0.0",
+  "id": "releases-root",
+  "title": "Releases",
+  "description": "Fixture root catalog mimicking a dated-release layout (e.g. Overture).",
+  "links": [
+    {"rel": "self", "href": "catalog.json"},
+    {"rel": "root", "href": "catalog.json"},
+    {"rel": "child", "href": "2024-01-01/catalog.json"},
+    {
+      "rel": "child",
+      "href": "2024-02-01/catalog.json",
+      "title": "Latest release",
+      "latest": true
+    }
+  ],
+  "latest": "2024-02-01"
+}
