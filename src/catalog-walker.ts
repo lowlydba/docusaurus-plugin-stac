@@ -22,7 +22,7 @@ function isHttp(href: string): boolean {
 async function loadStac(source: string): Promise<StacObject> {
   let text: string;
   if (isHttp(source)) {
-    const res = await fetch(source);
+    const res = await fetchWithRetry(source);
     if (!res.ok) {
       throw new Error(
         `docusaurus-plugin-stac: failed to fetch ${source} (${res.status} ${res.statusText})`,
@@ -41,6 +41,40 @@ async function loadStac(source: string): Promise<StacObject> {
       }`,
     );
   }
+}
+
+/**
+ * Fetch with a request timeout and a couple of retries. Static catalogs are
+ * often served from object storage or a live host (e.g. Overture); transient
+ * network hiccups shouldn't fail a whole build. Only network errors/timeouts
+ * are retried — a definitive HTTP response (including 4xx/5xx) is returned as-is
+ * for the caller to handle.
+ */
+async function fetchWithRetry(
+  url: string,
+  attempts = 3,
+  timeoutMs = 20000,
+): Promise<Response> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, {signal: controller.signal});
+    } catch (err) {
+      lastErr = err;
+      if (attempt < attempts - 1) {
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      }
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw new Error(
+    `docusaurus-plugin-stac: network error fetching ${url}: ${
+      (lastErr as Error)?.message ?? String(lastErr)
+    }`,
+  );
 }
 
 /**
@@ -101,6 +135,7 @@ function nodeTitle(stac: StacObject): string {
 interface WalkOptions {
   routeBasePath: string;
   maxDepth: number;
+  maxItemsPerCollection?: number;
 }
 
 /**
@@ -109,8 +144,9 @@ interface WalkOptions {
  */
 export async function walkCatalog(
   rootSource: string,
-  {routeBasePath, maxDepth}: WalkOptions,
+  {routeBasePath, maxDepth, maxItemsPerCollection}: WalkOptions,
 ): Promise<StacContent> {
+  const itemCap = maxItemsPerCollection ?? Number.POSITIVE_INFINITY;
   const nodes: StacNode[] = [];
   const visited = new Set<string>();
   const usedRoutePaths = new Set<string>();
@@ -167,12 +203,18 @@ export async function walkCatalog(
     }
 
     const links = Array.isArray(stac.links) ? stac.links : [];
+    let itemCount = 0;
     for (const link of links) {
       if (!link || typeof link.href !== 'string') continue;
       const rel = (link.rel ?? '').toString().toLowerCase();
       const isChild = CHILD_RELS.has(rel);
       const isItem = ITEM_RELS.has(rel);
       if (!isChild && !isItem) continue;
+      // Guardrail: cap the number of Items materialized per parent so
+      // API-scale catalogs stay buildable. Child/subcatalog links are always
+      // followed. Once the cap is hit we skip remaining item links entirely
+      // (no fetch), keeping the build bounded.
+      if (isItem && itemCount >= itemCap) continue;
 
       const childSource = resolveHref(source, link.href);
       const child = await visit(
@@ -189,6 +231,7 @@ export async function walkCatalog(
           routePath: child.routePath,
         };
         node.children.push(ref);
+        if (isItem) itemCount++;
       }
     }
 

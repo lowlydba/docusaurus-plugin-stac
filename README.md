@@ -10,6 +10,17 @@ SPA — so catalog content isn't visible to crawlers before JavaScript executes.
 This plugin closes that gap: each node becomes a static route with server-rendered
 metadata, plus an optional interactive map.
 
+## Demo
+
+A live demo built from [Overture Maps](https://overturemaps.org)' STAC catalog is
+deployed on every merge to `main`:
+
+**https://lowlydba.github.io/docusaurus-plugin-stac/**
+
+Because Overture's collections hold hundreds of Items each, the demo sets
+`maxItemsPerCollection` to keep the build bounded — see
+[Options](#options).
+
 ## Features
 
 - Walks `child` / `item` links from a root catalog (local path **or** `http(s)` URL),
@@ -67,6 +78,9 @@ module.exports = {
 | `id`            | `string`                      | `'default'`  | Instance id for multi-instance use.                                         |
 | `title`         | `string`                      | catalog title| Nav/root title override.                                                    |
 | `maxDepth`      | `number`                      | `Infinity`   | Max depth to walk from the root (root = 0).                                 |
+| `maxItemsPerCollection` | `number`              | `Infinity`   | Cap on the number of Items materialized per parent. Child/sub-catalog links are always followed; only Item links past the cap are skipped (not fetched). Use for API-scale catalogs (e.g. Overture) where a full walk would generate tens of thousands of pages. |
+| `itemsPerPage`  | `number`                      | `10`         | Page size for paginated child lists.                                        |
+| `search`        | `boolean`                     | `true`       | Build a client-side search index + search UI.                               |
 | `map`           | `object \| false`             | enabled      | Map configuration, or `false` to disable maps entirely.                     |
 
 ### `map` options

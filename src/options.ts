@@ -56,6 +56,11 @@ export function normalizeOptions(
     id: options.id ?? 'default',
     title: options.title,
     maxDepth: options.maxDepth ?? Number.POSITIVE_INFINITY,
+    maxItemsPerCollection:
+      typeof options.maxItemsPerCollection === 'number' &&
+      options.maxItemsPerCollection >= 0
+        ? Math.floor(options.maxItemsPerCollection)
+        : Number.POSITIVE_INFINITY,
     map: normalizeMap(options.map),
     itemsPerPage,
     search: options.search ?? true,

@@ -98,6 +98,22 @@ describe('walkCatalog (filesystem fixture)', () => {
     expect(nodes.find((n) => n.id === 'deep-item')).toBeUndefined();
     expect(nodes.every((n) => n.depth <= 1)).toBe(true);
   });
+
+  it('caps items per collection but still follows child links', async () => {
+    const {nodes} = await walkCatalog(fixtureRoot, {
+      routeBasePath: '/stac',
+      maxDepth: Number.POSITIVE_INFINITY,
+      maxItemsPerCollection: 1,
+    });
+    const items = nodes.filter((n) => n.type === 'Item');
+    // collection-a has 2 items → only the first is kept; dup keeps its 1 item.
+    expect(items).toHaveLength(2);
+    expect(nodes.find((n) => n.id === 'item-3d')).toBeDefined();
+    expect(nodes.find((n) => n.id === 'item-point')).toBeUndefined();
+    expect(nodes.find((n) => n.id === 'deep-item')).toBeDefined();
+    // Sub-catalogs/collections are still fully walked.
+    expect(nodes.filter((n) => n.id === 'dup-collection')).toHaveLength(2);
+  });
 });
 
 describe('walkCatalog (http, mocked fetch)', () => {
@@ -174,5 +190,35 @@ describe('walkCatalog (http, mocked fetch)', () => {
         maxDepth: Number.POSITIVE_INFINITY,
       }),
     ).rejects.toThrow(/not valid JSON/);
+  });
+
+  it('retries a transient network error then succeeds', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('ECONNRESET'))
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: async () => JSON.stringify({type: 'Catalog', id: 'r', links: []}),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const {root} = await walkCatalog('https://cat.test/catalog.json', {
+      routeBasePath: '/stac',
+      maxDepth: Number.POSITIVE_INFINITY,
+    });
+    expect(root.id).toBe('r');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('throws after exhausting retries on persistent network errors', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('ENETDOWN')));
+    await expect(
+      walkCatalog('https://cat.test/catalog.json', {
+        routeBasePath: '/stac',
+        maxDepth: Number.POSITIVE_INFINITY,
+      }),
+    ).rejects.toThrow(/network error fetching/);
   });
 });

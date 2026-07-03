@@ -169,6 +169,14 @@ export interface StacPluginOptions {
   title?: string;
   /** Max depth to walk from the root (root = 0). Defaults to Infinity. */
   maxDepth?: number;
+  /**
+   * Max number of `item`-linked children to materialize per parent
+   * catalog/collection. A practicality guardrail for API-scale catalogs (e.g.
+   * Overture) that expose thousands of items as static files; child/subcatalog
+   * links are always followed. Defaults to Infinity (spec-faithful: a page per
+   * Item). Catalog/Collection pages still paginate their full listing.
+   */
+  maxItemsPerCollection?: number;
   /** Map configuration, or `false` to disable maps. Defaults to enabled. */
   map?: StacMapOptions | false;
   /** Number of child records shown per page before pagination. Defaults to 25. */
@@ -193,6 +201,7 @@ export interface NormalizedStacPluginOptions {
   id: string;
   title?: string;
   maxDepth: number;
+  maxItemsPerCollection: number;
   map: NormalizedStacMapOptions;
   itemsPerPage: number;
   search: boolean;

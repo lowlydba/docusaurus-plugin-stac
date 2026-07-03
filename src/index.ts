@@ -45,6 +45,7 @@ export default function pluginStac(
       return walkCatalog(rootSource, {
         routeBasePath: options.routeBasePath,
         maxDepth: options.maxDepth,
+        maxItemsPerCollection: options.maxItemsPerCollection,
       });
     },
 

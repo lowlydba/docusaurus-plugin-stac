@@ -68,9 +68,22 @@ describe('normalizeOptions', () => {
     expect(o.routeBasePath).toBe(DEFAULT_ROUTE_BASE);
     expect(o.id).toBe('default');
     expect(o.maxDepth).toBe(Number.POSITIVE_INFINITY);
+    expect(o.maxItemsPerCollection).toBe(Number.POSITIVE_INFINITY);
     expect(o.itemsPerPage).toBe(DEFAULT_ITEMS_PER_PAGE);
     expect(o.search).toBe(true);
     expect(o.map.enabled).toBe(true);
+  });
+
+  it('normalizes maxItemsPerCollection (floors, allows 0, rejects negatives)', () => {
+    expect(
+      normalizeOptions({path: 'c', maxItemsPerCollection: 12.7}).maxItemsPerCollection,
+    ).toBe(12);
+    expect(
+      normalizeOptions({path: 'c', maxItemsPerCollection: 0}).maxItemsPerCollection,
+    ).toBe(0);
+    expect(
+      normalizeOptions({path: 'c', maxItemsPerCollection: -3}).maxItemsPerCollection,
+    ).toBe(Number.POSITIVE_INFINITY);
   });
 
   it('honors explicit overrides and floors itemsPerPage', () => {
