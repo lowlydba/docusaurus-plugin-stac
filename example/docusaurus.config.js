@@ -30,6 +30,9 @@ const config = {
       ({
         path: './stac/catalog.json',
         routeBasePath: '/stac',
+        // Small page size so the demo exercises pagination with only a few items.
+        itemsPerPage: 3,
+        search: true,
         // Map is enabled by default. To point at real Overture PMTiles, set
         // `pmtilesUrl`. To disable maps entirely, set `map: false`.
         map: {

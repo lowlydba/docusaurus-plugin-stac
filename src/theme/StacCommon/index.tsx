@@ -1,17 +1,16 @@
-import React from 'react';
+import React, {useState} from 'react';
 import Link from '@docusaurus/Link';
-import type {
-  StacAsset,
-  StacChildRef,
-  StacNode,
-} from '../../types.js';
+import Translate, {translate} from '@docusaurus/Translate';
+
+import type {StacAsset, StacChildRef, StacNode} from '../../types.js';
+import {formatFieldValue, getFieldLabel} from '../../fields/registry.js';
 
 // ---------------------------------------------------------------------------
 // Formatting helpers
 // ---------------------------------------------------------------------------
 
 export function formatValue(value: unknown): string {
-  if (value === null || value === undefined) return '—';
+  if (value === null || value === undefined) return '\u2014';
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') {
     return String(value);
@@ -59,7 +58,6 @@ export function bboxFromGeometry(geometry: unknown): number[] | undefined {
 export function itemBbox(node: StacNode): number[] | undefined {
   const stac = node.stac as {bbox?: number[]; geometry?: unknown};
   if (Array.isArray(stac.bbox) && stac.bbox.length >= 4) {
-    // STAC bbox may be 2D [w,s,e,n] or 3D [w,s,minz,e,n,maxz]; normalize to 2D.
     if (stac.bbox.length >= 6) {
       return [stac.bbox[0], stac.bbox[1], stac.bbox[3], stac.bbox[4]];
     }
@@ -92,8 +90,20 @@ export function Breadcrumbs({
   rootTitle?: string;
 }): React.JSX.Element {
   return (
-    <nav className="stac-breadcrumbs" aria-label="Breadcrumb">
-      <Link to={routeBasePath}>{rootTitle ?? 'Catalog'}</Link>
+    <nav
+      className="stac-breadcrumbs"
+      aria-label={translate({
+        id: 'stac.breadcrumbs.aria',
+        message: 'Breadcrumb',
+      })}
+    >
+      <Link to={routeBasePath}>
+        {rootTitle ?? (
+          <Translate id="stac.breadcrumbs.catalog" description="Root crumb">
+            Catalog
+          </Translate>
+        )}
+      </Link>
       {node.routePath !== routeBasePath && (
         <>
           <span className="stac-breadcrumbs__sep">/</span>
@@ -104,25 +114,83 @@ export function Breadcrumbs({
   );
 }
 
+function ChildLink({child}: {child: StacChildRef}): React.JSX.Element {
+  return (
+    <Link to={child.routePath} className="stac-child-list__link">
+      <TypeBadge type={child.type} />
+      <span className="stac-child-list__title">{child.title}</span>
+    </Link>
+  );
+}
+
+/**
+ * A crawlable, client-paginated list of child records. Every child is rendered
+ * into the DOM (so crawlers see them all); pagination only toggles visibility.
+ */
 export function ChildList({
   children,
+  itemsPerPage,
 }: {
   children: StacChildRef[];
+  itemsPerPage?: number;
 }): React.JSX.Element {
+  const [page, setPage] = useState(0);
+
   if (children.length === 0) {
-    return <p className="stac-empty">No child records.</p>;
+    return (
+      <p className="stac-empty">
+        <Translate id="stac.childList.empty">No child records.</Translate>
+      </p>
+    );
   }
+
+  const perPage = itemsPerPage && itemsPerPage > 0 ? itemsPerPage : children.length;
+  const pageCount = Math.ceil(children.length / perPage);
+  const start = page * perPage;
+  const end = start + perPage;
+
   return (
-    <ul className="stac-child-list">
-      {children.map((c) => (
-        <li key={c.routePath} className="stac-child-list__item">
-          <Link to={c.routePath} className="stac-child-list__link">
-            <TypeBadge type={c.type} />
-            <span className="stac-child-list__title">{c.title}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
+    <div className="stac-child-list-wrap">
+      <ul className="stac-child-list">
+        {children.map((c, i) => (
+          <li
+            key={c.routePath}
+            className="stac-child-list__item"
+            hidden={pageCount > 1 && (i < start || i >= end)}
+          >
+            <ChildLink child={c} />
+          </li>
+        ))}
+      </ul>
+      {pageCount > 1 && (
+        <div className="stac-pagination" role="navigation">
+          <button
+            type="button"
+            className="stac-pagination__btn"
+            disabled={page === 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            <Translate id="stac.pagination.prev">Previous</Translate>
+          </button>
+          <span className="stac-pagination__status">
+            <Translate
+              id="stac.pagination.status"
+              values={{current: page + 1, total: pageCount}}
+            >
+              {'Page {current} of {total}'}
+            </Translate>
+          </span>
+          <button
+            type="button"
+            className="stac-pagination__btn"
+            disabled={page >= pageCount - 1}
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+          >
+            <Translate id="stac.pagination.next">Next</Translate>
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -152,6 +220,38 @@ export function KeyValueTable({
   );
 }
 
+/**
+ * Like KeyValueTable, but resolves labels and value formatting through the
+ * extension-aware field registry (stac-fields-lite).
+ */
+export function PropertiesTable({
+  properties,
+  caption,
+}: {
+  properties: Record<string, unknown>;
+  caption?: string;
+}): React.JSX.Element | null {
+  const keys = Object.keys(properties);
+  if (keys.length === 0) return null;
+  return (
+    <table className="stac-kv">
+      {caption && <caption className="stac-kv__caption">{caption}</caption>}
+      <tbody>
+        {keys.map((key) => (
+          <tr key={key}>
+            <th scope="row" className="stac-kv__key" title={key}>
+              {getFieldLabel(key)}
+            </th>
+            <td className="stac-kv__value">
+              {formatFieldValue(key, properties[key])}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export function AssetList({
   assets,
 }: {
@@ -161,7 +261,9 @@ export function AssetList({
   if (entries.length === 0) return null;
   return (
     <div className="stac-assets">
-      <h2 className="stac-section-title">Assets</h2>
+      <h2 className="stac-section-title">
+        <Translate id="stac.assets.title">Assets</Translate>
+      </h2>
       <ul className="stac-assets__list">
         {entries.map(([key, asset]) => (
           <li key={key} className="stac-assets__item">
@@ -190,7 +292,13 @@ export function FootprintText({
   bbox: number[] | undefined;
 }): React.JSX.Element {
   if (!bbox) {
-    return <p className="stac-empty">No spatial footprint available.</p>;
+    return (
+      <p className="stac-empty">
+        <Translate id="stac.footprint.none">
+          No spatial footprint available.
+        </Translate>
+      </p>
+    );
   }
   const [w, s, e, n] = bbox;
   return (
@@ -198,7 +306,7 @@ export function FootprintText({
       <tbody>
         <tr>
           <th scope="row" className="stac-kv__key">
-            Bounding box
+            <Translate id="stac.footprint.bbox">Bounding box</Translate>
           </th>
           <td className="stac-kv__value">
             W {w}, S {s}, E {e}, N {n}

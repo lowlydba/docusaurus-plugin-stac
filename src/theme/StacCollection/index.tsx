@@ -1,5 +1,6 @@
 import React from 'react';
 import Layout from '@theme/Layout';
+import Translate, {translate} from '@docusaurus/Translate';
 
 import type {StacCollection as StacCollectionType, StacPageData} from '../../types.js';
 import {
@@ -15,22 +16,28 @@ export default function StacCollection({
 }: {
   data: StacPageData;
 }): React.JSX.Element {
-  const {node, routeBasePath} = data;
+  const {node, routeBasePath, itemsPerPage} = data;
   const stac = node.stac as StacCollectionType;
 
   const spatial = stac.extent?.spatial?.bbox?.[0];
   const temporal = stac.extent?.temporal?.interval?.[0];
 
   const summary: [string, unknown][] = [
-    ['License', stac.license],
-    ['Keywords', stac.keywords?.join(', ')],
-    ['Spatial extent', spatial ? spatial.join(', ') : undefined],
+    [translate({id: 'stac.collection.license', message: 'License'}), stac.license],
     [
-      'Temporal extent',
+      translate({id: 'stac.collection.keywords', message: 'Keywords'}),
+      stac.keywords?.join(', '),
+    ],
+    [
+      translate({id: 'stac.collection.spatial', message: 'Spatial extent'}),
+      spatial ? spatial.join(', ') : undefined,
+    ],
+    [
+      translate({id: 'stac.collection.temporal', message: 'Temporal extent'}),
       temporal ? `${temporal[0] ?? '…'} — ${temporal[1] ?? '…'}` : undefined,
     ],
     [
-      'Providers',
+      translate({id: 'stac.collection.providers', message: 'Providers'}),
       stac.providers?.map((p) => p.name).join(', '),
     ],
   ];
@@ -46,12 +53,25 @@ export default function StacCollection({
         </header>
         {stac.description && <p className="stac-description">{stac.description}</p>}
 
-        <KeyValueTable caption="Collection metadata" entries={summary} />
+        <KeyValueTable
+          caption={translate({
+            id: 'stac.collection.metadata',
+            message: 'Collection metadata',
+          })}
+          entries={summary}
+        />
 
         <AssetList assets={stac.assets} />
 
-        <h2 className="stac-section-title">Items ({node.children.length})</h2>
-        <ChildList children={node.children} />
+        <h2 className="stac-section-title">
+          <Translate
+            id="stac.collection.items"
+            values={{count: node.children.length}}
+          >
+            {'Items ({count})'}
+          </Translate>
+        </h2>
+        <ChildList children={node.children} itemsPerPage={itemsPerPage} />
       </main>
     </Layout>
   );

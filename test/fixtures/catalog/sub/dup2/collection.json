@@ -1,0 +1,8 @@
+{
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "id": "dup-collection",
+  "title": "Dup Collection 2",
+  "extent": {"spatial": {"bbox": [[-5, -5, 5, 5]]}},
+  "links": []
+}

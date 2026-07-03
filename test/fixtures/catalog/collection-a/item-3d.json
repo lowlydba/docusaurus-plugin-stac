@@ -1,0 +1,19 @@
+{
+  "stac_version": "0.8.1",
+  "id": "item-3d",
+  "bbox": [-122.5, 37.7, 0, -122.3, 37.9, 100],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [[[-122.5, 37.7], [-122.3, 37.7], [-122.3, 37.9], [-122.5, 37.9], [-122.5, 37.7]]]
+  },
+  "properties": {
+    "datetime": "2020-06-15T18:30:00Z",
+    "eo:cloud_cover": 12.3456,
+    "view:sun_elevation": 62.1,
+    "proj:epsg": 32610
+  },
+  "assets": {
+    "thumbnail": {"href": "thumb.png", "title": "Thumbnail", "type": "image/png", "roles": ["thumbnail"]}
+  },
+  "links": [{"rel": "self", "href": "item-3d.json"}]
+}

@@ -9,6 +9,7 @@ import type {
   StacNodeType,
   StacObject,
 } from './types.js';
+import {normalizeStacObject} from './stac-normalize.js';
 
 const CHILD_RELS = new Set(['child']);
 const ITEM_RELS = new Set(['item']);
@@ -81,7 +82,11 @@ function detectType(
   if (t === 'catalog') return 'Catalog';
   // Fall back to the link rel that led us here.
   if (relHint === 'item') return 'Item';
-  // A "child" with no type and with sub-links is treated as a Catalog.
+  // Heuristics for pre-1.0 objects that lack a `type` field: a Collection is
+  // distinguished by extent/license/providers.
+  const s = stac as {extent?: unknown; license?: unknown; providers?: unknown};
+  if (s.extent || s.license || s.providers) return 'Collection';
+  // A "child" with no type and no collection markers is treated as a Catalog.
   return 'Catalog';
 }
 
@@ -138,8 +143,9 @@ export async function walkCatalog(
     }
     visited.add(key);
 
-    const stac = await loadStac(source);
-    const type = detectType(stac, relHint);
+    const rawStac = await loadStac(source);
+    const type = detectType(rawStac, relHint);
+    const stac = normalizeStacObject(rawStac, type);
     const routePath =
       forcedRoutePath ?? assignRoutePath(parentRoutePath ?? routeBasePath, stac.id);
 

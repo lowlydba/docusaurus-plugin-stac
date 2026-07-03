@@ -1,0 +1,9 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "id": "item-point",
+  "geometry": {"type": "Point", "coordinates": [-122.4, 37.8]},
+  "properties": {"datetime": "2021-03-01T00:00:00Z"},
+  "assets": {},
+  "links": []
+}

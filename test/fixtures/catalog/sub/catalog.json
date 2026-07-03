@@ -1,0 +1,10 @@
+{
+  "type": "Catalog",
+  "stac_version": "1.0.0",
+  "id": "sub",
+  "title": "Sub Catalog",
+  "links": [
+    {"rel": "child", "href": "dup/collection.json"},
+    {"rel": "child", "href": "dup2/collection.json"}
+  ]
+}

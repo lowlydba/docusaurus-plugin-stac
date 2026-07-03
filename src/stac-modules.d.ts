@@ -38,6 +38,22 @@ declare module '@docusaurus/useGlobalData' {
 
 declare module '*.css';
 
+declare module '@docusaurus/Translate' {
+  import type {ReactNode} from 'react';
+  export interface TranslateProps {
+    readonly id?: string;
+    readonly message?: string;
+    readonly description?: string;
+    readonly values?: Record<string, unknown>;
+    readonly children?: string;
+  }
+  export default function Translate(props: TranslateProps): ReactNode;
+  export function translate(
+    opts: {id?: string; message: string; description?: string},
+    values?: Record<string, unknown>,
+  ): string;
+}
+
 declare module '@theme/Layout' {
   import type {ReactNode} from 'react';
   export interface Props {

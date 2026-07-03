@@ -171,6 +171,10 @@ export interface StacPluginOptions {
   maxDepth?: number;
   /** Map configuration, or `false` to disable maps. Defaults to enabled. */
   map?: StacMapOptions | false;
+  /** Number of child records shown per page before pagination. Defaults to 25. */
+  itemsPerPage?: number;
+  /** Whether to build a client search box on the catalog root. Defaults to true. */
+  search?: boolean;
 }
 
 /** Options after defaults are applied. */
@@ -190,6 +194,8 @@ export interface NormalizedStacPluginOptions {
   title?: string;
   maxDepth: number;
   map: NormalizedStacMapOptions;
+  itemsPerPage: number;
+  search: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -200,4 +206,36 @@ export interface StacPageData {
   node: StacNode;
   routeBasePath: string;
   map: NormalizedStacMapOptions;
+  itemsPerPage: number;
+  searchEnabled: boolean;
+}
+
+/** A flattened entry used by the client search component. */
+export interface StacSearchEntry {
+  id: string;
+  type: StacNodeType;
+  title: string;
+  routePath: string;
+  description?: string;
+  keywords?: string[];
+  datetime?: string;
+}
+
+/** Global plugin data exposed via `usePluginData`. */
+export interface StacGlobalData {
+  routeBasePath: string;
+  title: string;
+  map: NormalizedStacMapOptions;
+  itemsPerPage: number;
+  search: boolean;
+  tree: StacNavNode;
+  index: StacSearchEntry[];
+}
+
+export interface StacNavNode {
+  id: string;
+  type: StacNodeType;
+  title: string;
+  routePath: string;
+  children: StacNavNode[];
 }
