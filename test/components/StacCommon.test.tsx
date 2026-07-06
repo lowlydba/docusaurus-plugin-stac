@@ -231,23 +231,36 @@ describe('Thumbnail', () => {
 });
 
 describe('parseExtension', () => {
-  it('extracts name and version from a standard stac-extensions.github.io URI', () => {
+  it('resolves a friendly title from the well-known extension registry', () => {
     expect(parseExtension('https://stac-extensions.github.io/eo/v1.1.0/schema.json')).toEqual({
       uri: 'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
-      name: 'eo',
+      name: 'Electro-Optical',
       version: 'v1.1.0',
     });
   });
 
-  it('falls back to the last path segment for non-matching URIs', () => {
+  it('includes a description when the registry entry has one', () => {
+    expect(parseExtension('https://stac-extensions.github.io/sar/v1.0.0/schema.json')).toEqual({
+      uri: 'https://stac-extensions.github.io/sar/v1.0.0/schema.json',
+      name: 'SAR',
+      description: 'Synthetic Aperture Radar',
+      version: 'v1.0.0',
+    });
+  });
+
+  it('falls back to the last path segment for unrecognized/non-matching URIs', () => {
     expect(parseExtension('https://example.test/extensions/custom')).toEqual({
       uri: 'https://example.test/extensions/custom',
       name: 'custom',
     });
   });
 
-  it('falls back to the raw string when there is no path segment', () => {
-    expect(parseExtension('eo')).toEqual({uri: 'eo', name: 'eo'});
+  it('resolves a friendly title from a bare legacy identifier too', () => {
+    expect(parseExtension('eo')).toEqual({uri: 'eo', name: 'Electro-Optical'});
+  });
+
+  it('falls back to the raw string for an unrecognized bare identifier', () => {
+    expect(parseExtension('made-up')).toEqual({uri: 'made-up', name: 'made-up'});
   });
 });
 
@@ -259,7 +272,7 @@ describe('ExtensionsList', () => {
     expect(container2.firstChild).toBeNull();
   });
 
-  it('renders a linked badge per extension, with version suffix when parsed', () => {
+  it('renders a linked badge per extension, with friendly title + version suffix when known', () => {
     render(
       <ExtensionsList
         extensions={[
@@ -268,7 +281,7 @@ describe('ExtensionsList', () => {
         ]}
       />,
     );
-    const eoLink = screen.getByRole('link', {name: /eo/});
+    const eoLink = screen.getByRole('link', {name: /Electro-Optical/});
     expect(eoLink).toHaveAttribute(
       'href',
       'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
@@ -277,6 +290,18 @@ describe('ExtensionsList', () => {
     expect(screen.getByRole('link', {name: 'custom'})).toHaveAttribute(
       'href',
       'https://example.test/extensions/custom',
+    );
+  });
+
+  it('uses the description in the tooltip title when the extension has one', () => {
+    render(
+      <ExtensionsList
+        extensions={['https://stac-extensions.github.io/sar/v1.0.0/schema.json']}
+      />,
+    );
+    expect(screen.getByRole('link', {name: /SAR/})).toHaveAttribute(
+      'title',
+      'Synthetic Aperture Radar (https://stac-extensions.github.io/sar/v1.0.0/schema.json)',
     );
   });
 });

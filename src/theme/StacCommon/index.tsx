@@ -23,6 +23,7 @@ import {StorageSchemesValue, detectStorageProvider} from './StorageSchemes.js';
 import {ProviderIcon} from './ProviderIcons.js';
 import {isPlainObject} from '../../utils.js';
 import {findThumbnailHref, type ThumbnailSource} from '../../thumbnail.js';
+import {STAC_EXTENSION_TITLES} from '../../stac-extension-titles.js';
 
 export {CopyLinkButton} from './CopyButton.js';
 export {findThumbnailHref} from '../../thumbnail.js';
@@ -771,27 +772,41 @@ export function PropertiesTable({
 
 export interface ParsedExtension {
   uri: string;
+  /** Friendly display name — the well-known extension's title when
+   * recognized (via `stac-fields`'s registry), else derived from the URI. */
   name: string;
+  /** Longer description, only available for recognized extensions. */
+  description?: string;
   version?: string;
 }
 
 // Modern (1.0+) extension URIs follow `.../<name>/v<version>/schema.json`.
 const EXTENSION_URI_RE = /\/([a-z0-9-]+)\/(v[\d.]+)\/schema\.json$/i;
 
-/** Derive a short display name (+ version, if present) from an extension URI. */
+/** Derive a short field-name prefix + version from an extension URI, then
+ * resolve a friendly title/description via the well-known extension
+ * registry (falls back to the raw prefix/last path segment when unknown). */
 export function parseExtension(uri: string): ParsedExtension {
   const match = uri.match(EXTENSION_URI_RE);
-  if (match) return {uri, name: match[1], version: match[2]};
+  const prefix = match?.[1];
+  const version = match?.[2];
   // Pre-1.0/non-standard extension identifiers: fall back to the last path
   // segment (or the raw string for a bare short id like the legacy "eo").
-  const lastSegment = uri.split('/').filter(Boolean).pop();
-  return {uri, name: lastSegment || uri};
+  const fallbackName = prefix ?? uri.split('/').filter(Boolean).pop() ?? uri;
+
+  const known = STAC_EXTENSION_TITLES[fallbackName.toLowerCase()];
+  if (known === undefined) return {uri, name: fallbackName, version};
+  return typeof known === 'string'
+    ? {uri, name: known, version}
+    : {uri, name: known.label, description: known.explain, version};
 }
 
 /**
  * Renders a node's `stac_extensions` as a row of linked badges — each links
  * out to its schema URI (opened in a new tab), mirroring how STAC Browser
- * surfaces extension usage on Collection/Item pages.
+ * surfaces extension usage on Collection/Item pages. Recognized extensions
+ * (per `stac-fields`'s registry) show a friendly title/description instead
+ * of the raw schema-URI slug.
  */
 export function ExtensionsList({
   extensions,
@@ -806,7 +821,7 @@ export function ExtensionsList({
       </h2>
       <ul className="stac-extensions__list">
         {extensions.map((uri) => {
-          const {name, version} = parseExtension(uri);
+          const {name, description, version} = parseExtension(uri);
           return (
             <li key={uri} className="stac-extensions__item">
               <a
@@ -814,7 +829,7 @@ export function ExtensionsList({
                 target="_blank"
                 rel="noreferrer noopener"
                 className="stac-badge stac-badge--extension"
-                title={uri}
+                title={description ? `${description} (${uri})` : uri}
               >
                 {name}
                 {version && (

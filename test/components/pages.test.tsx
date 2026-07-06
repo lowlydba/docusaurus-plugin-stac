@@ -148,7 +148,7 @@ describe('StacCatalog', () => {
       } as StacNode['stac'],
     });
     render(<StacCatalog data={pageData(node)} />);
-    expect(screen.getByRole('link', {name: /eo/})).toHaveAttribute(
+    expect(screen.getByRole('link', {name: /Electro-Optical/})).toHaveAttribute(
       'href',
       'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
     );
@@ -234,7 +234,7 @@ describe('StacCollection', () => {
       } as StacNode['stac'],
     });
     render(<StacCollection data={pageData(node)} />);
-    expect(screen.getByRole('link', {name: /eo/})).toHaveAttribute(
+    expect(screen.getByRole('link', {name: /Electro-Optical/})).toHaveAttribute(
       'href',
       'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
     );
@@ -379,7 +379,7 @@ describe('StacItem', () => {
       } as StacNode['stac'],
     });
     render(<StacItem data={pageData(node)} />);
-    expect(screen.getByRole('link', {name: /eo/})).toHaveAttribute(
+    expect(screen.getByRole('link', {name: /Electro-Optical/})).toHaveAttribute(
       'href',
       'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
     );
