@@ -1,0 +1,14 @@
+{
+  "type": "Feature",
+  "stac_version": "1.0.0",
+  "id": "thumb-item",
+  "collection": "thumb-collection",
+  "bbox": [-1, -1, 1, 1],
+  "geometry": null,
+  "properties": {"datetime": "2020-01-01T00:00:00Z"},
+  "assets": {
+    "thumbnail": {"href": "./thumb.jpg", "type": "image/jpeg"},
+    "data": {"href": "./data.tif", "type": "image/tiff; application=geotiff"}
+  },
+  "links": []
+}

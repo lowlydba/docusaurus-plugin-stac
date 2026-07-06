@@ -16,6 +16,9 @@ import {
   FootprintText,
   StacHead,
   SourceJsonLink,
+  Thumbnail,
+  parseExtension,
+  ExtensionsList,
 } from '../../src/theme/StacCommon/index.js';
 import type {StacChildRef, StacLazyChildRef, StacNode} from '../../src/types.js';
 
@@ -76,6 +79,24 @@ describe('itemBbox', () => {
   it('falls back to geometry bounds', () => {
     const n = node({geometry: {type: 'Point', coordinates: [5, 6]}});
     expect(itemBbox(n)).toEqual([5, 6, 5, 6]);
+  });
+
+  it('falls back to extent.spatial.bbox for Collections (no top-level bbox/geometry)', () => {
+    const n = node({extent: {spatial: {bbox: [[-10, -20, 10, 20]]}}});
+    expect(itemBbox(n)).toEqual([-10, -20, 10, 20]);
+  });
+
+  it('collapses a 3D extent.spatial.bbox', () => {
+    const n = node({extent: {spatial: {bbox: [[-10, -20, 0, 10, 20, 9]]}}});
+    expect(itemBbox(n)).toEqual([-10, -20, 10, 20]);
+  });
+
+  it('prefers a top-level bbox over extent.spatial.bbox when both are present', () => {
+    const n = node({
+      bbox: [-1, -2, 1, 2],
+      extent: {spatial: {bbox: [[-10, -20, 10, 20]]}},
+    });
+    expect(itemBbox(n)).toEqual([-1, -2, 1, 2]);
   });
 });
 
@@ -155,6 +176,133 @@ describe('ChildList', () => {
     expect(container.querySelector('.stac-pagination')).toBeNull();
     const items = container.querySelectorAll('.stac-child-list__item');
     expect(Array.from(items).every((li) => !li.hasAttribute('hidden'))).toBe(true);
+  });
+
+  it("renders a card thumbnail when a child ref carries a thumbnailHref", () => {
+    const withThumb: StacChildRef = {
+      id: 'c0',
+      type: 'Item',
+      title: 'Has thumb',
+      routePath: '/stac/c0',
+      thumbnailHref: 'https://example.test/thumb.jpg',
+    };
+    const withoutThumb: StacChildRef = {
+      id: 'c1',
+      type: 'Item',
+      title: 'No thumb',
+      routePath: '/stac/c1',
+    };
+    const {container} = render(<ChildList children={[withThumb, withoutThumb]} />);
+    const images = container.querySelectorAll('img.stac-thumbnail--card');
+    expect(images).toHaveLength(1);
+    expect(images[0]).toHaveAttribute('src', 'https://example.test/thumb.jpg');
+  });
+});
+
+describe('Thumbnail', () => {
+  it('renders an image resolved from the thumbnail asset', () => {
+    render(
+      <Thumbnail
+        stac={{assets: {thumbnail: {href: 'https://example.test/t.jpg'}}}}
+        alt="A place"
+      />,
+    );
+    const img = screen.getByAltText('A place');
+    expect(img).toHaveAttribute('src', 'https://example.test/t.jpg');
+    expect(img).toHaveClass('stac-thumbnail--hero');
+  });
+
+  it('renders nothing when no thumbnail can be resolved', () => {
+    const {container} = render(<Thumbnail stac={{assets: {}}} alt="Nothing" />);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('hides itself if the image fails to load', () => {
+    render(
+      <Thumbnail
+        stac={{assets: {thumbnail: {href: 'https://example.test/broken.jpg'}}}}
+        alt="Broken"
+      />,
+    );
+    const img = screen.getByAltText('Broken');
+    fireEvent.error(img);
+    expect(screen.queryByAltText('Broken')).not.toBeInTheDocument();
+  });
+});
+
+describe('parseExtension', () => {
+  it('resolves a friendly title from the well-known extension registry', () => {
+    expect(parseExtension('https://stac-extensions.github.io/eo/v1.1.0/schema.json')).toEqual({
+      uri: 'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+      name: 'Electro-Optical',
+      version: 'v1.1.0',
+    });
+  });
+
+  it('includes a description when the registry entry has one', () => {
+    expect(parseExtension('https://stac-extensions.github.io/sar/v1.0.0/schema.json')).toEqual({
+      uri: 'https://stac-extensions.github.io/sar/v1.0.0/schema.json',
+      name: 'SAR',
+      description: 'Synthetic Aperture Radar',
+      version: 'v1.0.0',
+    });
+  });
+
+  it('falls back to the last path segment for unrecognized/non-matching URIs', () => {
+    expect(parseExtension('https://example.test/extensions/custom')).toEqual({
+      uri: 'https://example.test/extensions/custom',
+      name: 'custom',
+    });
+  });
+
+  it('resolves a friendly title from a bare legacy identifier too', () => {
+    expect(parseExtension('eo')).toEqual({uri: 'eo', name: 'Electro-Optical'});
+  });
+
+  it('falls back to the raw string for an unrecognized bare identifier', () => {
+    expect(parseExtension('made-up')).toEqual({uri: 'made-up', name: 'made-up'});
+  });
+});
+
+describe('ExtensionsList', () => {
+  it('renders nothing when there are no extensions', () => {
+    const {container} = render(<ExtensionsList extensions={undefined} />);
+    expect(container.firstChild).toBeNull();
+    const {container: container2} = render(<ExtensionsList extensions={[]} />);
+    expect(container2.firstChild).toBeNull();
+  });
+
+  it('renders a linked badge per extension, with friendly title + version suffix when known', () => {
+    render(
+      <ExtensionsList
+        extensions={[
+          'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+          'https://example.test/extensions/custom',
+        ]}
+      />,
+    );
+    const eoLink = screen.getByRole('link', {name: /Electro-Optical/});
+    expect(eoLink).toHaveAttribute(
+      'href',
+      'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+    );
+    expect(eoLink).toHaveTextContent('v1.1.0');
+    expect(screen.getByRole('link', {name: 'custom'})).toHaveAttribute(
+      'href',
+      'https://example.test/extensions/custom',
+    );
+  });
+
+  it('uses the description in the tooltip title when the extension has one', () => {
+    render(
+      <ExtensionsList
+        extensions={['https://stac-extensions.github.io/sar/v1.0.0/schema.json']}
+      />,
+    );
+    expect(screen.getByRole('link', {name: /SAR/})).toHaveAttribute(
+      'title',
+      'Synthetic Aperture Radar (https://stac-extensions.github.io/sar/v1.0.0/schema.json)',
+    );
   });
 });
 

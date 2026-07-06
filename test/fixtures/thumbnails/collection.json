@@ -1,0 +1,18 @@
+{
+  "type": "Collection",
+  "stac_version": "1.0.0",
+  "id": "thumb-collection",
+  "title": "Thumbnail collection",
+  "description": "Has an overview-role asset.",
+  "license": "CC-BY-4.0",
+  "extent": {
+    "spatial": {"bbox": [[-1, -1, 1, 1]]},
+    "temporal": {"interval": [["2020-01-01T00:00:00Z", null]]}
+  },
+  "assets": {
+    "overview": {"href": "./overview.png", "type": "image/png", "roles": ["overview"]}
+  },
+  "links": [
+    {"rel": "item", "href": "./item.json"}
+  ]
+}

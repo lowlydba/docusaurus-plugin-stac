@@ -119,9 +119,62 @@ describe('StacCatalog', () => {
       screen.getByRole('link', {name: 'Overture Maps Attribution and Licensing'}),
     ).toHaveAttribute('href', 'https://docs.overturemaps.org/attribution/');
   });
+
+  it('renders a hero thumbnail when the catalog carries a rel:"thumbnail" link', () => {
+    const node = baseNode({
+      type: 'Catalog',
+      routePath: '/stac',
+      title: 'Root Catalog',
+      stac: {
+        id: 'root',
+        links: [{rel: 'thumbnail', href: 'https://example.test/catalog-thumb.png'}],
+      } as StacNode['stac'],
+    });
+    const {container} = render(<StacCatalog data={pageData(node)} />);
+    const img = container.querySelector('img.stac-thumbnail--hero');
+    expect(img).not.toBeNull();
+    expect(img).toHaveAttribute('src', 'https://example.test/catalog-thumb.png');
+  });
+
+  it('renders extension badges when the catalog declares stac_extensions', () => {
+    const node = baseNode({
+      type: 'Catalog',
+      routePath: '/stac',
+      title: 'Root Catalog',
+      stac: {
+        id: 'root',
+        links: [],
+        stac_extensions: ['https://stac-extensions.github.io/eo/v1.1.0/schema.json'],
+      } as StacNode['stac'],
+    });
+    render(<StacCatalog data={pageData(node)} />);
+    expect(screen.getByRole('link', {name: /Electro-Optical/})).toHaveAttribute(
+      'href',
+      'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+    );
+  });
 });
 
 describe('StacCollection', () => {
+  it('renders a hero thumbnail when the collection has an overview asset', () => {
+    const node = baseNode({
+      type: 'Collection',
+      routePath: '/stac/coll',
+      title: 'Pictured collection',
+      stac: {
+        id: 'coll',
+        links: [],
+        assets: {
+          overview: {href: 'https://example.test/coll-thumb.png', roles: ['overview']},
+        },
+      } as StacNode['stac'],
+    });
+    const {container} = render(<StacCollection data={pageData(node)} />);
+    const img = container.querySelector('img.stac-thumbnail--hero');
+    expect(img).not.toBeNull();
+    expect(img).toHaveAttribute('src', 'https://example.test/coll-thumb.png');
+  });
+
   it('renders collection metadata and items', () => {
     const node = baseNode({
       type: 'Collection',
@@ -154,6 +207,37 @@ describe('StacCollection', () => {
     expect(screen.getByText('Acme')).toBeInTheDocument();
     expect(screen.getByText('Items (1)')).toBeInTheDocument();
     expect(screen.getByText('Item 1')).toBeInTheDocument();
+    // Map disabled → text footprint fallback, resolved from extent.spatial.bbox.
+    expect(screen.getByText('Bounding box')).toBeInTheDocument();
+  });
+
+  it('renders no map section when the collection has no spatial extent', () => {
+    const node = baseNode({
+      type: 'Collection',
+      routePath: '/stac/coll',
+      title: 'No Extent',
+      stac: {id: 'coll', links: []} as StacNode['stac'],
+    });
+    const {container} = render(<StacCollection data={pageData(node)} />);
+    expect(container.querySelector('.stac-map-section')).toBeNull();
+  });
+
+  it('renders extension badges when the collection declares stac_extensions', () => {
+    const node = baseNode({
+      type: 'Collection',
+      routePath: '/stac/coll',
+      title: 'Extended',
+      stac: {
+        id: 'coll',
+        links: [],
+        stac_extensions: ['https://stac-extensions.github.io/eo/v1.1.0/schema.json'],
+      } as StacNode['stac'],
+    });
+    render(<StacCollection data={pageData(node)} />);
+    expect(screen.getByRole('link', {name: /Electro-Optical/})).toHaveAttribute(
+      'href',
+      'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+    );
   });
 
   it('renders clear wording for open-ended and unspecified temporal extents', () => {
@@ -260,6 +344,45 @@ describe('StacItem', () => {
     expect(screen.getByText('← Back to parent')).toBeInTheDocument();
     // Map disabled → text footprint fallback.
     expect(screen.getByText('Bounding box')).toBeInTheDocument();
+  });
+
+  it('renders a hero thumbnail when the item has a thumbnail asset', () => {
+    const node = baseNode({
+      type: 'Item',
+      routePath: '/stac/item',
+      title: 'Thumbed item',
+      stac: {
+        id: 'item',
+        links: [],
+        assets: {
+          thumbnail: {href: 'https://example.test/item-thumb.jpg'},
+        },
+      } as StacNode['stac'],
+    });
+    const {container} = render(<StacItem data={pageData(node)} />);
+    const img = container.querySelector('img.stac-thumbnail--hero');
+    expect(img).not.toBeNull();
+    expect(img).toHaveAttribute('src', 'https://example.test/item-thumb.jpg');
+    expect(img).toHaveAttribute('alt', 'Thumbed item');
+  });
+
+  it('renders extension badges when the item declares stac_extensions', () => {
+    const node = baseNode({
+      type: 'Item',
+      routePath: '/stac/item',
+      title: 'Extended item',
+      stac: {
+        id: 'item',
+        links: [],
+        assets: {},
+        stac_extensions: ['https://stac-extensions.github.io/eo/v1.1.0/schema.json'],
+      } as StacNode['stac'],
+    });
+    render(<StacItem data={pageData(node)} />);
+    expect(screen.getByRole('link', {name: /Electro-Optical/})).toHaveAttribute(
+      'href',
+      'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+    );
   });
 
   it('handles an item with no properties or parent', () => {

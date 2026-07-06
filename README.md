@@ -8,8 +8,13 @@ A [Docusaurus](https://docusaurus.io) plugin that ingests a static
 [STAC](https://stacspec.org) (SpatioTemporal Asset Catalog) and generates **real,
 crawlable static HTML pages** for every Catalog, Collection and Item at build time.
 
-Each node gets a server-rendered route with metadata, plus an optional interactive
-footprint map - no server, no headless-browser prerendering, no SPA runtime.
+Each node gets a server-rendered route with metadata, an automatically
+resolved thumbnail/preview image (from a `thumbnail`/`overview` asset or a
+`rel: "thumbnail"`/`"preview"` link, matching STAC Browser's convention),
+declared `stac_extensions` shown as linked badges (with friendly titles for
+well-known extensions, sourced from `stac-fields`'s registry), and an
+optional interactive footprint/extent map (Items and Collections alike) - no
+server, no headless-browser prerendering, no SPA runtime.
 
 This README is organized around the four things you might need:
 
@@ -17,12 +22,6 @@ This README is organized around the four things you might need:
 - **[How-to guides](#how-to-guides)** - accomplish specific tasks (disable maps, swizzle components, run the demo, handle large catalogs, link back from your STAC JSON).
 - **[Reference](#reference)** - plugin and map option tables.
 - **[Explanation](#explanation-why-this-exists)** - why this plugin exists and how it works internally.
-
-> [!TIP]
-> The STAC spec's own [best practices document](https://github.com/radiantearth/stac-spec/blob/master/best-practices.md#using-relation-types)
-> recommends every Item/Collection link to an HTML version of itself via
-> `"rel": "alternate", "type": "text/html"`. This plugin is exactly the tool
-> that generates that HTML - see [Link back to this plugin from your STAC JSON](#link-back-to-this-plugin-from-your-stac-json).
 
 ## Demo
 
@@ -152,17 +151,10 @@ explicit and spec-compliant, matching the pattern used by
 [STAC Browser](https://github.com/radiantearth/stac-browser) and other
 STAC-aware clients.
 
-If you're authoring or updating your catalog with
-[`pystac`](https://pystac.readthedocs.io) (the Python STAC library - not to be
-confused with [`pystac-client`](https://pystac-client.readthedocs.io), which
-is for *querying* STAC APIs), this is a one-liner. `pystac` ships `RelType.ALTERNATE`
-and `MediaType.HTML` constants for exactly this purpose:
+If you're authoring with [`pystac`](https://pystac.readthedocs.io), it ships
+`RelType.ALTERNATE`/`MediaType.HTML` constants for exactly this:
 
 ```python
-import pystac
-
-collection = pystac.Collection.from_file("./stac/catalog.json")
-
 collection.add_link(
     pystac.Link(
         rel=pystac.RelType.ALTERNATE,
@@ -171,14 +163,11 @@ collection.add_link(
         title="HTML version of this STAC Collection",
     )
 )
-
 collection.save_object()
 ```
 
-The same works on `pystac.Catalog` and `pystac.Item` objects. If you're
-generating many Items, add this link in the same step where you set each
-Item's `self` link, deriving the HTML `target` from the Item's id/collection
-the same way you derive its JSON path.
+The same works on `Catalog`/`Item` objects - add it alongside each node's
+`self` link, deriving the HTML `target` from the id/path the same way.
 
 ## Reference
 
@@ -227,40 +216,27 @@ un-served local files), so the cap is effectively a no-op for them.
 
 ### Motivation
 
-STAC (SpatioTemporal Asset Catalog) was built intentionally as a minimal,
-JSON-only wire format. Per the [spec's own README](https://github.com/radiantearth/stac-spec#about),
-a STAC catalog can be implemented in a completely "static" manner as a group
-of hyperlinked Catalog, Collection, and Item files, letting data publishers
-expose their data as a browsable set of files without deploying an API or
-database. HTML rendering isn't part of that core spec - it's left to
-downstream tooling. That said, the spec's own
+STAC was built intentionally as a minimal, JSON-only wire format - per the
+[spec's own README](https://github.com/radiantearth/stac-spec#about), a
+catalog can be a plain group of hyperlinked Catalog/Collection/Item files,
+with no API or database required. HTML rendering is deliberately left to
+downstream tooling; the spec's
 [best practices document](https://github.com/radiantearth/stac-spec/blob/master/best-practices.md#using-relation-types)
-explicitly anticipates and endorses HTML tooling like this plugin: its link
-`rel` types table recommends every Item/Collection JSON carry an `"alternate"`
-link with `"type": "text/html"` pointing at a human-browsable rendering of
-that record, a convention added in the spec's
-[1.0.0 changelog](https://github.com/radiantearth/stac-spec/blob/master/CHANGELOG.md).
+even recommends every Item/Collection carry an `"alternate"` link with
+`"type": "text/html"` pointing at a human-browsable rendering (added in the
+[1.0.0 changelog](https://github.com/radiantearth/stac-spec/blob/master/CHANGELOG.md)).
 This plugin generates exactly that HTML target - see
 [Link back to this plugin from your STAC JSON](#link-back-to-this-plugin-from-your-stac-json).
 
 That downstream tool turned out to be [STAC Browser](https://github.com/radiantearth/stac-browser),
-a Vue single-page application that renders STAC JSON into an interactive UI.
-It's a solid renderer, but being a client-rendered SPA comes with a known
-tradeoff: search engine crawlers only see the DOM before JavaScript executes,
-so catalog content isn't indexable without an extra pre-rendering step (e.g.
-a hosting provider's prerendering pipeline or a headless-browser tool) layered
-on afterward, rather than static generation being the default. That's a
-meaningful gap given what the spec itself says a Catalog is for: per the
-[Catalog spec](https://github.com/radiantearth/stac-spec/blob/master/catalog-spec/catalog-spec.md),
-"their purpose is discovery: to be browsed by people or be crawled by clients
-to build a searchable index." An SPA that crawlers can't see through works
-against that purpose.
-
-That gap remains open today. Meanwhile, per the [STAC API spec's conformance section](https://github.com/radiantearth/stac-api-spec/blob/v1.0.0/api-spec.md#conformance),
-the spec aligns with OGC API - Features 1.0 at the JSON/OpenAPI layer, but
-doesn't mandate OGC API's own pattern of first-class HTML content negotiation
-(`?f=html`) as part of conformance. HTML was always meant to live outside the
-spec - this plugin is one way of filling that space for static catalogs.
+a Vue SPA that renders STAC JSON into an interactive UI. It's a solid
+renderer, but as a client-rendered SPA, crawlers only see the DOM before JS
+executes - catalogs aren't indexable without an extra prerendering step
+layered on afterward. That's a real gap given what a
+[Catalog is for](https://github.com/radiantearth/stac-spec/blob/master/catalog-spec/catalog-spec.md):
+"to be browsed by people or be crawled by clients to build a searchable
+index." This plugin fills that gap for static catalogs by generating real
+static HTML instead.
 
 ### What this project does differently
 
@@ -268,31 +244,7 @@ Instead of rendering STAC catalogs client-side in a browser, this plugin walks
 a static STAC catalog's `child`/`item` links at build time and generates real
 static routes - one per Catalog, Collection, and Item - using Docusaurus's own
 static-site-generation pipeline (`loadContent` → `contentLoaded` →
-`createData`/`addRoute`).
-
-The result complements SPA-based browsers like STAC Browser: a canonical,
-indexable, static HTML page per STAC entity,
-with no server, no headless-browser prerendering step, and no SPA runtime
-dependency.
-
-**Classic approach (STAC Browser):**
-
-```mermaid
-flowchart LR
-    A[Static catalog JSON<br/>or STAC API backend] --> B[Browser loads SPA shell]
-    B --> C[JS fetches catalog/search results<br/>+ renders DOM]
-    C --> D[Page visible to a human]
-    C -.-> E[Crawler sees empty shell]
-```
-
-STAC Browser itself ships no server: it's a static client bundle. But it's
-commonly pointed at a **STAC API**, a searchable REST backend (frequently
-deployed serverless, e.g. [`stac-server`](https://github.com/stac-utils/stac-server)
-on AWS Lambda) rather than a plain static catalog. Either way, rendering
-happens client-side after the JS shell loads, so the crawlability tradeoff
-above still applies.
-
-**This plugin:**
+`createData`/`addRoute`):
 
 ```mermaid
 flowchart LR
@@ -302,8 +254,9 @@ flowchart LR
     D --> E[Visible to humans and crawlers alike]
 ```
 
-This plugin only targets the static-catalog case (no search API involved);
-generation happens once at build time rather than per-request in the browser.
+This only targets the static-catalog case (no search API involved);
+generation happens once at build time rather than per-request in the browser,
+complementing SPA-based browsers like STAC Browser rather than replacing them.
 
 ### Map context without a tile server
 

@@ -22,8 +22,11 @@ import {CopyLinkButton, CopyTextButton} from './CopyButton.js';
 import {StorageSchemesValue, detectStorageProvider} from './StorageSchemes.js';
 import {ProviderIcon} from './ProviderIcons.js';
 import {isPlainObject} from '../../utils.js';
+import {findThumbnailHref, type ThumbnailSource} from '../../thumbnail.js';
+import {STAC_EXTENSION_TITLES} from '../../stac-extension-titles.js';
 
 export {CopyLinkButton} from './CopyButton.js';
+export {findThumbnailHref} from '../../thumbnail.js';
 
 // ---------------------------------------------------------------------------
 // Formatting helpers
@@ -82,16 +85,32 @@ export function itemBbox(node: StacNode): number[] | undefined {
   return stacBbox(node.stac);
 }
 
-/** Best-effort `[west, south, east, north]` from a raw STAC object. */
+/** Best-effort `[west, south, east, north]` from a raw STAC object. Falls
+ * back to a Collection's `extent.spatial.bbox[0]` when the object has neither
+ * a top-level `bbox` (Item-only) nor a `geometry` — this is what lets the map
+ * component draw a footprint for Collection/Catalog pages too. */
 export function stacBbox(stac: unknown): number[] | undefined {
-  const s = stac as {bbox?: number[]; geometry?: unknown};
+  const s = stac as {
+    bbox?: number[];
+    geometry?: unknown;
+    extent?: {spatial?: {bbox?: number[][]}};
+  };
   if (Array.isArray(s.bbox) && s.bbox.length >= 4) {
     if (s.bbox.length >= 6) {
       return [s.bbox[0], s.bbox[1], s.bbox[3], s.bbox[4]];
     }
     return s.bbox.slice(0, 4);
   }
-  return bboxFromGeometry(s.geometry);
+  const fromGeometry = bboxFromGeometry(s.geometry);
+  if (fromGeometry) return fromGeometry;
+
+  const extentBbox = s.extent?.spatial?.bbox?.[0];
+  if (Array.isArray(extentBbox) && extentBbox.length >= 4) {
+    return extentBbox.length >= 6
+      ? [extentBbox[0], extentBbox[1], extentBbox[3], extentBbox[4]]
+      : extentBbox.slice(0, 4);
+  }
+  return undefined;
 }
 
 /** `[west, south, east, north]` as a GeoJSON/STAC-style bbox array literal —
@@ -216,6 +235,28 @@ function DownloadIcon({className}: {className?: string}): React.JSX.Element {
   );
 }
 
+/** Generic "extension" glyph — flags a badge as a `stac_extensions` entry at
+ * a glance, even when the label is an unrecognized raw slug. */
+function PuzzleIcon({className}: {className?: string}): React.JSX.Element {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M15.39 4.39a1 1 0 0 0 1.68-.474 2.5 2.5 0 1 1 3.014 3.015 1 1 0 0 0-.474 1.68l1.683 1.682a2.414 2.414 0 0 1 0 3.414L19.61 15.39a1 1 0 0 1-1.68-.474 2.5 2.5 0 1 0-3.014 3.015 1 1 0 0 1 .474 1.68l-1.683 1.682a2.414 2.414 0 0 1-3.414 0L8.61 19.61a1 1 0 0 0-1.68.474 2.5 2.5 0 1 1-3.014-3.015 1 1 0 0 0 .474-1.68l-1.683-1.682a2.414 2.414 0 0 1 0-3.414L4.39 8.61a1 1 0 0 1 1.68.474 2.5 2.5 0 1 0 3.014-3.015 1 1 0 0 1-.474-1.68l1.683-1.682a2.414 2.414 0 0 1 3.414 0z" />
+    </svg>
+  );
+}
+
 /**
  * A link that makes it visually explicit it points at a downloadable file: it
  * carries a download icon and opens in a new tab. Used for STAC assets and the
@@ -313,6 +354,41 @@ export function TypeBadge({type}: {type: StacNode['type']}): React.JSX.Element {
 }
 
 /**
+ * A preview/thumbnail image, resolved from an asset or link via
+ * `findThumbnailHref` (see `thumbnail.ts`). Static generation can't verify the
+ * image actually loads (no build-time network/FS check), so a load error
+ * quietly drops the image rather than leaving a broken-image icon in a
+ * crawlable page — the surrounding metadata still renders fine without it.
+ *
+ * `variant` picks the sizing/aspect-ratio treatment: `hero` for a full-width
+ * image atop a Catalog/Collection/Item page, `card` for the compact thumbnail
+ * next to an entry in a child list.
+ */
+export function Thumbnail({
+  stac,
+  alt,
+  variant = 'hero',
+}: {
+  stac: ThumbnailSource;
+  alt: string;
+  variant?: 'hero' | 'card';
+}): React.JSX.Element | null {
+  const href = findThumbnailHref(stac);
+  const [failed, setFailed] = useState(false);
+  if (!href || failed) return null;
+  return (
+    <img
+      src={href}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={`stac-thumbnail stac-thumbnail--${variant}`}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/**
  * Marks a title/name as a moving alias — e.g. the `/latest` mirror of
  * whichever dated release currently holds that title — rather than a fixed,
  * permanent record. Rendered as a `:latest` suffix directly after the name,
@@ -370,6 +446,19 @@ export function Breadcrumbs({
 function ChildLink({child}: {child: StacChildRef}): React.JSX.Element {
   return (
     <Link to={child.routePath} className="stac-child-list__link">
+      {child.thumbnailHref && (
+        <img
+          src={child.thumbnailHref}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className="stac-thumbnail stac-thumbnail--card"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      )}
       <TypeBadge type={child.type} />
       <span className="stac-child-list__title">
         {child.title}
@@ -619,6 +708,7 @@ function LazyItemCard({
         <span className="stac-lazy__card-title">{title}</span>
         {stac.id !== title && <code className="stac-id">{stac.id}</code>}
       </div>
+      <Thumbnail stac={stac} alt={title} variant="card" />
       {datetime && (
         <p className="stac-lazy__card-datetime">{datetime}</p>
       )}
@@ -699,6 +789,81 @@ export function PropertiesTable({
         ))}
       </tbody>
     </table>
+  );
+}
+
+export interface ParsedExtension {
+  uri: string;
+  /** Friendly display name — the well-known extension's title when
+   * recognized (via `stac-fields`'s registry), else derived from the URI. */
+  name: string;
+  /** Longer description, only available for recognized extensions. */
+  description?: string;
+  version?: string;
+}
+
+// Modern (1.0+) extension URIs follow `.../<name>/v<version>/schema.json`.
+const EXTENSION_URI_RE = /\/([a-z0-9-]+)\/(v[\d.]+)\/schema\.json$/i;
+
+/** Derive a short field-name prefix + version from an extension URI, then
+ * resolve a friendly title/description via the well-known extension
+ * registry (falls back to the raw prefix/last path segment when unknown). */
+export function parseExtension(uri: string): ParsedExtension {
+  const match = uri.match(EXTENSION_URI_RE);
+  const prefix = match?.[1];
+  const version = match?.[2];
+  // Pre-1.0/non-standard extension identifiers: fall back to the last path
+  // segment (or the raw string for a bare short id like the legacy "eo").
+  const fallbackName = prefix ?? uri.split('/').filter(Boolean).pop() ?? uri;
+
+  const known = STAC_EXTENSION_TITLES[fallbackName.toLowerCase()];
+  if (known === undefined) return {uri, name: fallbackName, version};
+  return typeof known === 'string'
+    ? {uri, name: known, version}
+    : {uri, name: known.label, description: known.explain, version};
+}
+
+/**
+ * Renders a node's `stac_extensions` as a row of linked badges — each links
+ * out to its schema URI (opened in a new tab), mirroring how STAC Browser
+ * surfaces extension usage on Collection/Item pages. Recognized extensions
+ * (per `stac-fields`'s registry) show a friendly title/description instead
+ * of the raw schema-URI slug.
+ */
+export function ExtensionsList({
+  extensions,
+}: {
+  extensions?: string[];
+}): React.JSX.Element | null {
+  if (!extensions || extensions.length === 0) return null;
+  return (
+    <div className="stac-extensions">
+      <h2 className="stac-section-title">
+        <Translate id="stac.extensions.title">Extensions</Translate>
+      </h2>
+      <ul className="stac-extensions__list">
+        {extensions.map((uri) => {
+          const {name, description, version} = parseExtension(uri);
+          return (
+            <li key={uri} className="stac-extensions__item">
+              <a
+                href={uri}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="stac-badge stac-badge--extension"
+                title={description ? `${description} (${uri})` : uri}
+              >
+                <PuzzleIcon className="stac-extensions__icon" />
+                {name}
+                {version && (
+                  <span className="stac-extensions__version">{version}</span>
+                )}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

@@ -76,6 +76,24 @@ describe('buildDataset', () => {
     });
   });
 
+  it('sets image from a thumbnail asset when present', () => {
+    const ds = buildDataset(
+      node({
+        type: 'Feature',
+        assets: {
+          thumbnail: {href: 'https://cat.test/n/thumb.jpg'},
+        },
+      }),
+      urls,
+    );
+    expect(ds.image).toBe('https://cat.test/n/thumb.jpg');
+  });
+
+  it('omits image when no thumbnail can be resolved', () => {
+    const ds = buildDataset(node({type: 'Feature', assets: {}}), urls);
+    expect(ds.image).toBeUndefined();
+  });
+
   it('derives temporalCoverage from start/end and 3D bbox from a Collection', () => {
     const ds = buildDataset(
       node(
