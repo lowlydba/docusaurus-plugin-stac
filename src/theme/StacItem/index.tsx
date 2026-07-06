@@ -7,9 +7,11 @@ import type {StacItem as StacItemType, StacPageData} from '../../types.js';
 import {
   AssetList,
   Breadcrumbs,
+  LicenseValue,
   PropertiesTable,
   SourceJsonLink,
   StacHead,
+  licenseLinks,
 } from '../StacCommon/index.js';
 import {PageHeader, PageShell} from '../StacCommon/PageLayout.js';
 import StacMap from '../StacMap/index.js';
@@ -22,6 +24,12 @@ export default function StacItem({
   const {node, routeBasePath, map, sidebarEnabled, jsonHref, jsonLd} = data;
   const stac = node.stac as StacItemType;
   const properties = stac.properties ?? {};
+  // Items rarely repeat `license`/license links (STAC scopes that to the
+  // Collection by default), but the spec allows overriding it per Item, and
+  // some catalogs (e.g. Overture) attach it here too — surface it if present,
+  // separately from `properties.license`, which the table below already
+  // shows generically.
+  const hasLinkLicense = licenseLinks(stac.links).length > 0;
 
   return (
     <Layout title={node.title} description={String(properties.description ?? '')}>
@@ -30,6 +38,7 @@ export default function StacItem({
         <Breadcrumbs node={node} routeBasePath={routeBasePath} />
         <PageHeader node={node} collection={stac.collection} />
         <SourceJsonLink jsonHref={jsonHref} />
+        {hasLinkLicense && <LicenseValue links={stac.links} />}
 
         <section
           className="stac-map-section"

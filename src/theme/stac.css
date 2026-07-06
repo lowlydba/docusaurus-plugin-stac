@@ -259,6 +259,30 @@
   color: var(--ifm-color-emphasis-800);
 }
 
+/* License: the plain SPDX-style id (reusing the same neutral chip look as
+ * `.stac-id`) plus one or more `rel: "license"` links for the full terms —
+ * shown side by side since catalogs often carry both. */
+.stac-license {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--stac-gap-xs);
+}
+.stac-license__id {
+  display: inline-block;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--stac-border-color);
+  border-radius: var(--stac-radius-pill);
+  background: var(--stac-surface-muted);
+  color: var(--ifm-color-emphasis-700);
+  white-space: nowrap;
+}
+.stac-license__link {
+  font-size: 0.85rem;
+}
+
 .stac-section-title {
   margin-top: var(--stac-gap-lg);
   border-bottom: 1px solid var(--stac-border-color);

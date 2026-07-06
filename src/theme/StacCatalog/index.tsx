@@ -2,13 +2,15 @@ import React from 'react';
 import Layout from '@theme/Layout';
 import Translate from '@docusaurus/Translate';
 
-import type {StacPageData} from '../../types.js';
+import type {StacLink, StacPageData} from '../../types.js';
 import {
   Breadcrumbs,
   ChildList,
   LazyChildList,
+  LicenseValue,
   SourceJsonLink,
   StacHead,
+  licenseLinks,
 } from '../StacCommon/index.js';
 import {PageHeader, PageShell} from '../StacCommon/PageLayout.js';
 import StacSearch from '../StacSearch/index.js';
@@ -20,8 +22,9 @@ export default function StacCatalog({
 }): React.JSX.Element {
   const {node, routeBasePath, itemsPerPage, searchEnabled, sidebarEnabled, jsonHref, jsonLd} =
     data;
-  const stac = node.stac as {description?: string};
+  const stac = node.stac as {description?: string; license?: string; links?: StacLink[]};
   const isRoot = node.routePath === routeBasePath;
+  const hasLicense = Boolean(stac.license) || licenseLinks(stac.links).length > 0;
 
   return (
     <Layout title={node.title} description={stac.description}>
@@ -31,6 +34,7 @@ export default function StacCatalog({
         <PageHeader node={node} />
         <SourceJsonLink jsonHref={jsonHref} />
         {stac.description && <p className="stac-description">{stac.description}</p>}
+        {hasLicense && <LicenseValue license={stac.license} links={stac.links} />}
 
         {isRoot && searchEnabled && <StacSearch pluginId="default" />}
 
