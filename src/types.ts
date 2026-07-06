@@ -101,6 +101,13 @@ export interface StacChildRef {
    * than a fixed, permanent page.
    */
   isLatestAlias?: boolean;
+  /**
+   * Best-effort thumbnail/preview image href for this child, resolved once at
+   * build time via `findThumbnailHref` (see `thumbnail.ts`). Lets a child list
+   * show a small image next to each entry — the same convention STAC Browser
+   * uses — without every page having to re-derive it from the child's assets.
+   */
+  thumbnailHref?: string;
 }
 
 /**

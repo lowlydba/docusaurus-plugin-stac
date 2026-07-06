@@ -120,6 +120,27 @@ describe('walkCatalog (filesystem fixture)', () => {
   });
 });
 
+describe('walkCatalog (thumbnail propagation)', () => {
+  const thumbRoot = path.resolve(dir, '../fixtures/thumbnails/catalog.json');
+
+  it('resolves a thumbnailHref on child refs from the child\'s own assets', async () => {
+    const {nodes} = await walkCatalog(thumbRoot, {
+      routeBasePath: '/stac',
+      maxDepth: Number.POSITIVE_INFINITY,
+    });
+
+    const root = nodes.find((n) => n.id === 'thumb-root');
+    const collectionRef = root?.children.find((c) => c.id === 'thumb-collection');
+    // Collection's "overview"-role asset.
+    expect(collectionRef?.thumbnailHref).toBe('./overview.png');
+
+    const collectionNode = nodes.find((n) => n.id === 'thumb-collection');
+    const itemRef = collectionNode?.children.find((c) => c.id === 'thumb-item');
+    // Item's "thumbnail"-keyed asset, preferred over the sibling "data" asset.
+    expect(itemRef?.thumbnailHref).toBe('./thumb.jpg');
+  });
+});
+
 describe('walkCatalog (latest-release alias)', () => {
   const releasesRoot = path.resolve(dir, '../fixtures/releases/catalog.json');
 

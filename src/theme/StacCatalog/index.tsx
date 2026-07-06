@@ -10,6 +10,7 @@ import {
   LicenseValue,
   SourceJsonLink,
   StacHead,
+  Thumbnail,
   licenseLinks,
 } from '../StacCommon/index.js';
 import {PageHeader, PageShell} from '../StacCommon/PageLayout.js';
@@ -33,6 +34,7 @@ export default function StacCatalog({
         <Breadcrumbs node={node} routeBasePath={routeBasePath} rootTitle={node.title} />
         <PageHeader node={node} />
         <SourceJsonLink jsonHref={jsonHref} />
+        <Thumbnail stac={stac} alt={node.title} />
         {stac.description && <p className="stac-description">{stac.description}</p>}
         {hasLicense && <LicenseValue license={stac.license} links={stac.links} />}
 

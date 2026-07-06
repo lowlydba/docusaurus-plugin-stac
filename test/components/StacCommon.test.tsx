@@ -16,6 +16,7 @@ import {
   FootprintText,
   StacHead,
   SourceJsonLink,
+  Thumbnail,
 } from '../../src/theme/StacCommon/index.js';
 import type {StacChildRef, StacLazyChildRef, StacNode} from '../../src/types.js';
 
@@ -155,6 +156,57 @@ describe('ChildList', () => {
     expect(container.querySelector('.stac-pagination')).toBeNull();
     const items = container.querySelectorAll('.stac-child-list__item');
     expect(Array.from(items).every((li) => !li.hasAttribute('hidden'))).toBe(true);
+  });
+
+  it("renders a card thumbnail when a child ref carries a thumbnailHref", () => {
+    const withThumb: StacChildRef = {
+      id: 'c0',
+      type: 'Item',
+      title: 'Has thumb',
+      routePath: '/stac/c0',
+      thumbnailHref: 'https://example.test/thumb.jpg',
+    };
+    const withoutThumb: StacChildRef = {
+      id: 'c1',
+      type: 'Item',
+      title: 'No thumb',
+      routePath: '/stac/c1',
+    };
+    const {container} = render(<ChildList children={[withThumb, withoutThumb]} />);
+    const images = container.querySelectorAll('img.stac-thumbnail--card');
+    expect(images).toHaveLength(1);
+    expect(images[0]).toHaveAttribute('src', 'https://example.test/thumb.jpg');
+  });
+});
+
+describe('Thumbnail', () => {
+  it('renders an image resolved from the thumbnail asset', () => {
+    render(
+      <Thumbnail
+        stac={{assets: {thumbnail: {href: 'https://example.test/t.jpg'}}}}
+        alt="A place"
+      />,
+    );
+    const img = screen.getByAltText('A place');
+    expect(img).toHaveAttribute('src', 'https://example.test/t.jpg');
+    expect(img).toHaveClass('stac-thumbnail--hero');
+  });
+
+  it('renders nothing when no thumbnail can be resolved', () => {
+    const {container} = render(<Thumbnail stac={{assets: {}}} alt="Nothing" />);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('hides itself if the image fails to load', () => {
+    render(
+      <Thumbnail
+        stac={{assets: {thumbnail: {href: 'https://example.test/broken.jpg'}}}}
+        alt="Broken"
+      />,
+    );
+    const img = screen.getByAltText('Broken');
+    fireEvent.error(img);
+    expect(screen.queryByAltText('Broken')).not.toBeInTheDocument();
   });
 });
 

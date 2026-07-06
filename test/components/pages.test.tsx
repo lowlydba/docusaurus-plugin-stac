@@ -119,9 +119,44 @@ describe('StacCatalog', () => {
       screen.getByRole('link', {name: 'Overture Maps Attribution and Licensing'}),
     ).toHaveAttribute('href', 'https://docs.overturemaps.org/attribution/');
   });
+
+  it('renders a hero thumbnail when the catalog carries a rel:"thumbnail" link', () => {
+    const node = baseNode({
+      type: 'Catalog',
+      routePath: '/stac',
+      title: 'Root Catalog',
+      stac: {
+        id: 'root',
+        links: [{rel: 'thumbnail', href: 'https://example.test/catalog-thumb.png'}],
+      } as StacNode['stac'],
+    });
+    const {container} = render(<StacCatalog data={pageData(node)} />);
+    const img = container.querySelector('img.stac-thumbnail--hero');
+    expect(img).not.toBeNull();
+    expect(img).toHaveAttribute('src', 'https://example.test/catalog-thumb.png');
+  });
 });
 
 describe('StacCollection', () => {
+  it('renders a hero thumbnail when the collection has an overview asset', () => {
+    const node = baseNode({
+      type: 'Collection',
+      routePath: '/stac/coll',
+      title: 'Pictured collection',
+      stac: {
+        id: 'coll',
+        links: [],
+        assets: {
+          overview: {href: 'https://example.test/coll-thumb.png', roles: ['overview']},
+        },
+      } as StacNode['stac'],
+    });
+    const {container} = render(<StacCollection data={pageData(node)} />);
+    const img = container.querySelector('img.stac-thumbnail--hero');
+    expect(img).not.toBeNull();
+    expect(img).toHaveAttribute('src', 'https://example.test/coll-thumb.png');
+  });
+
   it('renders collection metadata and items', () => {
     const node = baseNode({
       type: 'Collection',
@@ -260,6 +295,26 @@ describe('StacItem', () => {
     expect(screen.getByText('← Back to parent')).toBeInTheDocument();
     // Map disabled → text footprint fallback.
     expect(screen.getByText('Bounding box')).toBeInTheDocument();
+  });
+
+  it('renders a hero thumbnail when the item has a thumbnail asset', () => {
+    const node = baseNode({
+      type: 'Item',
+      routePath: '/stac/item',
+      title: 'Thumbed item',
+      stac: {
+        id: 'item',
+        links: [],
+        assets: {
+          thumbnail: {href: 'https://example.test/item-thumb.jpg'},
+        },
+      } as StacNode['stac'],
+    });
+    const {container} = render(<StacItem data={pageData(node)} />);
+    const img = container.querySelector('img.stac-thumbnail--hero');
+    expect(img).not.toBeNull();
+    expect(img).toHaveAttribute('src', 'https://example.test/item-thumb.jpg');
+    expect(img).toHaveAttribute('alt', 'Thumbed item');
   });
 
   it('handles an item with no properties or parent', () => {

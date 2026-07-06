@@ -259,6 +259,28 @@
   color: var(--ifm-color-emphasis-800);
 }
 
+/* Thumbnail/preview image — the hero variant sits full-width atop a page
+ * (Catalog/Collection/Item), the card variant is a compact square shown next
+ * to an entry in a child list or lazy-loaded item card. */
+.stac-thumbnail--hero {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: var(--stac-radius-md);
+  border: 1px solid var(--stac-border-color);
+  margin: var(--stac-gap-md) 0;
+}
+.stac-thumbnail--card {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: cover;
+  border-radius: var(--stac-radius-sm);
+  border: 1px solid var(--stac-border-color);
+  flex-shrink: 0;
+}
+
+
 /* License: the plain SPDX-style id (reusing the same neutral chip look as
  * `.stac-id`) plus one or more `rel: "license"` links for the full terms —
  * shown side by side since catalogs often carry both. */

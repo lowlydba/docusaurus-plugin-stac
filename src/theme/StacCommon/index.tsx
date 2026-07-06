@@ -22,8 +22,10 @@ import {CopyLinkButton, CopyTextButton} from './CopyButton.js';
 import {StorageSchemesValue, detectStorageProvider} from './StorageSchemes.js';
 import {ProviderIcon} from './ProviderIcons.js';
 import {isPlainObject} from '../../utils.js';
+import {findThumbnailHref, type ThumbnailSource} from '../../thumbnail.js';
 
 export {CopyLinkButton} from './CopyButton.js';
+export {findThumbnailHref} from '../../thumbnail.js';
 
 // ---------------------------------------------------------------------------
 // Formatting helpers
@@ -313,6 +315,41 @@ export function TypeBadge({type}: {type: StacNode['type']}): React.JSX.Element {
 }
 
 /**
+ * A preview/thumbnail image, resolved from an asset or link via
+ * `findThumbnailHref` (see `thumbnail.ts`). Static generation can't verify the
+ * image actually loads (no build-time network/FS check), so a load error
+ * quietly drops the image rather than leaving a broken-image icon in a
+ * crawlable page — the surrounding metadata still renders fine without it.
+ *
+ * `variant` picks the sizing/aspect-ratio treatment: `hero` for a full-width
+ * image atop a Catalog/Collection/Item page, `card` for the compact thumbnail
+ * next to an entry in a child list.
+ */
+export function Thumbnail({
+  stac,
+  alt,
+  variant = 'hero',
+}: {
+  stac: ThumbnailSource;
+  alt: string;
+  variant?: 'hero' | 'card';
+}): React.JSX.Element | null {
+  const href = findThumbnailHref(stac);
+  const [failed, setFailed] = useState(false);
+  if (!href || failed) return null;
+  return (
+    <img
+      src={href}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={`stac-thumbnail stac-thumbnail--${variant}`}
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+/**
  * Marks a title/name as a moving alias — e.g. the `/latest` mirror of
  * whichever dated release currently holds that title — rather than a fixed,
  * permanent record. Rendered as a `:latest` suffix directly after the name,
@@ -370,6 +407,19 @@ export function Breadcrumbs({
 function ChildLink({child}: {child: StacChildRef}): React.JSX.Element {
   return (
     <Link to={child.routePath} className="stac-child-list__link">
+      {child.thumbnailHref && (
+        <img
+          src={child.thumbnailHref}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          className="stac-thumbnail stac-thumbnail--card"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = 'none';
+          }}
+        />
+      )}
       <TypeBadge type={child.type} />
       <span className="stac-child-list__title">
         {child.title}
@@ -619,6 +669,7 @@ function LazyItemCard({
         <span className="stac-lazy__card-title">{title}</span>
         {stac.id !== title && <code className="stac-id">{stac.id}</code>}
       </div>
+      <Thumbnail stac={stac} alt={title} variant="card" />
       {datetime && (
         <p className="stac-lazy__card-datetime">{datetime}</p>
       )}

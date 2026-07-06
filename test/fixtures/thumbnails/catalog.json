@@ -1,0 +1,9 @@
+{
+  "type": "Catalog",
+  "stac_version": "1.0.0",
+  "id": "thumb-root",
+  "title": "Thumbnail fixture root",
+  "links": [
+    {"rel": "child", "href": "./collection.json"}
+  ]
+}

@@ -11,6 +11,7 @@ import {
   PropertiesTable,
   SourceJsonLink,
   StacHead,
+  Thumbnail,
   licenseLinks,
 } from '../StacCommon/index.js';
 import {PageHeader, PageShell} from '../StacCommon/PageLayout.js';
@@ -39,6 +40,7 @@ export default function StacItem({
         <PageHeader node={node} collection={stac.collection} />
         <SourceJsonLink jsonHref={jsonHref} />
         {hasLinkLicense && <LicenseValue links={stac.links} />}
+        <Thumbnail stac={stac} alt={node.title} />
 
         <section
           className="stac-map-section"

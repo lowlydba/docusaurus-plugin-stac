@@ -11,6 +11,7 @@ import type {
   StacObject,
 } from './types.js';
 import {normalizeStacObject} from './stac-normalize.js';
+import {findThumbnailHref, type ThumbnailSource} from './thumbnail.js';
 import {isHttp} from './utils.js';
 
 const CHILD_RELS = new Set(['child']);
@@ -281,6 +282,8 @@ export async function walkCatalog(
           title: refTitle,
           routePath: child.routePath,
         };
+        const thumbnailHref = findThumbnailHref(child.stac as unknown as ThumbnailSource);
+        if (thumbnailHref) ref.thumbnailHref = thumbnailHref;
         node.children.push(ref);
         if (isItem) itemCount++;
       }
@@ -364,6 +367,7 @@ function appendLatestAlias(
 
   if (aliasRoot) {
     const parentNode = nodes.find((n) => n.routePath === sourceNode.parentRoutePath);
+    const sourceRef = parentNode?.children.find((c) => c.routePath === sourceRoutePath);
     // Unshift, not push: the "latest" alias should sort first wherever
     // `children` is rendered (main index page, sidebar tree), ahead of every
     // dated release it can point to.
@@ -373,6 +377,7 @@ function appendLatestAlias(
       title: aliasRoot.title,
       routePath: aliasRoot.routePath,
       isLatestAlias: true,
+      ...(sourceRef?.thumbnailHref ? {thumbnailHref: sourceRef.thumbnailHref} : {}),
     });
   }
 }

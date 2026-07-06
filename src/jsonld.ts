@@ -9,6 +9,7 @@ import type {
   StacNode,
   StacObject,
 } from './types.js';
+import {findThumbnailHref} from './thumbnail.js';
 
 export interface DatasetUrls {
   /** Absolute (or root-relative) URL of the human HTML page. */
@@ -33,6 +34,8 @@ export interface Dataset {
   description?: string;
   keywords?: string[];
   license?: string;
+  /** Thumbnail/preview image href, if the node has one (see `thumbnail.ts`). */
+  image?: string;
   dateCreated?: string;
   dateModified?: string;
   temporalCoverage?: string;
@@ -137,6 +140,9 @@ export function buildDataset(node: StacNode, urls: DatasetUrls): Dataset {
   if (typeof coll.license === 'string') dataset.license = coll.license;
   if (typeof props.created === 'string') dataset.dateCreated = props.created;
   if (typeof props.updated === 'string') dataset.dateModified = props.updated;
+
+  const thumbnailHref = findThumbnailHref(stac as {assets?: StacItem['assets']; links?: StacObject['links']});
+  if (thumbnailHref) dataset.image = thumbnailHref;
 
   const temporal = temporalCoverage(stac);
   if (temporal) dataset.temporalCoverage = temporal;
