@@ -7,6 +7,7 @@ import type {StacItem as StacItemType, StacPageData} from '../../types.js';
 import {
   AssetList,
   Breadcrumbs,
+  ExtensionsList,
   LicenseValue,
   PropertiesTable,
   SourceJsonLink,
@@ -55,6 +56,7 @@ export default function StacItem({
         />
 
         <AssetList assets={stac.assets} />
+        <ExtensionsList extensions={stac.stac_extensions} />
 
         {node.parentRoutePath && (
           <p className="stac-parent-link">

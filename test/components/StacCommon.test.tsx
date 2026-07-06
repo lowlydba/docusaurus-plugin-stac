@@ -17,6 +17,8 @@ import {
   StacHead,
   SourceJsonLink,
   Thumbnail,
+  parseExtension,
+  ExtensionsList,
 } from '../../src/theme/StacCommon/index.js';
 import type {StacChildRef, StacLazyChildRef, StacNode} from '../../src/types.js';
 
@@ -77,6 +79,24 @@ describe('itemBbox', () => {
   it('falls back to geometry bounds', () => {
     const n = node({geometry: {type: 'Point', coordinates: [5, 6]}});
     expect(itemBbox(n)).toEqual([5, 6, 5, 6]);
+  });
+
+  it('falls back to extent.spatial.bbox for Collections (no top-level bbox/geometry)', () => {
+    const n = node({extent: {spatial: {bbox: [[-10, -20, 10, 20]]}}});
+    expect(itemBbox(n)).toEqual([-10, -20, 10, 20]);
+  });
+
+  it('collapses a 3D extent.spatial.bbox', () => {
+    const n = node({extent: {spatial: {bbox: [[-10, -20, 0, 10, 20, 9]]}}});
+    expect(itemBbox(n)).toEqual([-10, -20, 10, 20]);
+  });
+
+  it('prefers a top-level bbox over extent.spatial.bbox when both are present', () => {
+    const n = node({
+      bbox: [-1, -2, 1, 2],
+      extent: {spatial: {bbox: [[-10, -20, 10, 20]]}},
+    });
+    expect(itemBbox(n)).toEqual([-1, -2, 1, 2]);
   });
 });
 
@@ -207,6 +227,57 @@ describe('Thumbnail', () => {
     const img = screen.getByAltText('Broken');
     fireEvent.error(img);
     expect(screen.queryByAltText('Broken')).not.toBeInTheDocument();
+  });
+});
+
+describe('parseExtension', () => {
+  it('extracts name and version from a standard stac-extensions.github.io URI', () => {
+    expect(parseExtension('https://stac-extensions.github.io/eo/v1.1.0/schema.json')).toEqual({
+      uri: 'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+      name: 'eo',
+      version: 'v1.1.0',
+    });
+  });
+
+  it('falls back to the last path segment for non-matching URIs', () => {
+    expect(parseExtension('https://example.test/extensions/custom')).toEqual({
+      uri: 'https://example.test/extensions/custom',
+      name: 'custom',
+    });
+  });
+
+  it('falls back to the raw string when there is no path segment', () => {
+    expect(parseExtension('eo')).toEqual({uri: 'eo', name: 'eo'});
+  });
+});
+
+describe('ExtensionsList', () => {
+  it('renders nothing when there are no extensions', () => {
+    const {container} = render(<ExtensionsList extensions={undefined} />);
+    expect(container.firstChild).toBeNull();
+    const {container: container2} = render(<ExtensionsList extensions={[]} />);
+    expect(container2.firstChild).toBeNull();
+  });
+
+  it('renders a linked badge per extension, with version suffix when parsed', () => {
+    render(
+      <ExtensionsList
+        extensions={[
+          'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+          'https://example.test/extensions/custom',
+        ]}
+      />,
+    );
+    const eoLink = screen.getByRole('link', {name: /eo/});
+    expect(eoLink).toHaveAttribute(
+      'href',
+      'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+    );
+    expect(eoLink).toHaveTextContent('v1.1.0');
+    expect(screen.getByRole('link', {name: 'custom'})).toHaveAttribute(
+      'href',
+      'https://example.test/extensions/custom',
+    );
   });
 });
 

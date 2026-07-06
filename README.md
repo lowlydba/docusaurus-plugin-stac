@@ -10,9 +10,10 @@ crawlable static HTML pages** for every Catalog, Collection and Item at build ti
 
 Each node gets a server-rendered route with metadata, an automatically
 resolved thumbnail/preview image (from a `thumbnail`/`overview` asset or a
-`rel: "thumbnail"`/`"preview"` link, matching STAC Browser's convention), plus
-an optional interactive footprint map - no server, no headless-browser
-prerendering, no SPA runtime.
+`rel: "thumbnail"`/`"preview"` link, matching STAC Browser's convention),
+declared `stac_extensions` shown as linked badges, and an optional interactive
+footprint/extent map (Items and Collections alike) - no server, no
+headless-browser prerendering, no SPA runtime.
 
 This README is organized around the four things you might need:
 

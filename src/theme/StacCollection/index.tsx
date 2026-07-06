@@ -7,6 +7,7 @@ import {
   AssetList,
   Breadcrumbs,
   ChildList,
+  ExtensionsList,
   KeyValueTable,
   LazyChildList,
   LicenseValue,
@@ -16,6 +17,7 @@ import {
   licenseLinks,
 } from '../StacCommon/index.js';
 import {PageHeader, PageShell} from '../StacCommon/PageLayout.js';
+import StacMap from '../StacMap/index.js';
 import {formatFieldValue} from '../../fields/registry.js';
 
 export default function StacCollection({
@@ -23,7 +25,7 @@ export default function StacCollection({
 }: {
   data: StacPageData;
 }): React.JSX.Element {
-  const {node, routeBasePath, itemsPerPage, sidebarEnabled, jsonHref, jsonLd} = data;
+  const {node, routeBasePath, itemsPerPage, map, sidebarEnabled, jsonHref, jsonLd} = data;
   const stac = node.stac as StacCollectionType;
 
   const spatial = stac.extent?.spatial?.bbox?.[0];
@@ -94,7 +96,20 @@ export default function StacCollection({
           entries={summary}
         />
 
+        {spatial && (
+          <section
+            className="stac-map-section"
+            aria-label={translate({
+              id: 'stac.collection.map',
+              message: 'Extent map',
+            })}
+          >
+            <StacMap node={node} map={map} />
+          </section>
+        )}
+
         <AssetList assets={stac.assets} />
+        <ExtensionsList extensions={stac.stac_extensions} />
 
         <h2 className="stac-section-title">
           <Translate

@@ -84,16 +84,32 @@ export function itemBbox(node: StacNode): number[] | undefined {
   return stacBbox(node.stac);
 }
 
-/** Best-effort `[west, south, east, north]` from a raw STAC object. */
+/** Best-effort `[west, south, east, north]` from a raw STAC object. Falls
+ * back to a Collection's `extent.spatial.bbox[0]` when the object has neither
+ * a top-level `bbox` (Item-only) nor a `geometry` — this is what lets the map
+ * component draw a footprint for Collection/Catalog pages too. */
 export function stacBbox(stac: unknown): number[] | undefined {
-  const s = stac as {bbox?: number[]; geometry?: unknown};
+  const s = stac as {
+    bbox?: number[];
+    geometry?: unknown;
+    extent?: {spatial?: {bbox?: number[][]}};
+  };
   if (Array.isArray(s.bbox) && s.bbox.length >= 4) {
     if (s.bbox.length >= 6) {
       return [s.bbox[0], s.bbox[1], s.bbox[3], s.bbox[4]];
     }
     return s.bbox.slice(0, 4);
   }
-  return bboxFromGeometry(s.geometry);
+  const fromGeometry = bboxFromGeometry(s.geometry);
+  if (fromGeometry) return fromGeometry;
+
+  const extentBbox = s.extent?.spatial?.bbox?.[0];
+  if (Array.isArray(extentBbox) && extentBbox.length >= 4) {
+    return extentBbox.length >= 6
+      ? [extentBbox[0], extentBbox[1], extentBbox[3], extentBbox[4]]
+      : extentBbox.slice(0, 4);
+  }
+  return undefined;
 }
 
 /** `[west, south, east, north]` as a GeoJSON/STAC-style bbox array literal —
@@ -750,6 +766,66 @@ export function PropertiesTable({
         ))}
       </tbody>
     </table>
+  );
+}
+
+export interface ParsedExtension {
+  uri: string;
+  name: string;
+  version?: string;
+}
+
+// Modern (1.0+) extension URIs follow `.../<name>/v<version>/schema.json`.
+const EXTENSION_URI_RE = /\/([a-z0-9-]+)\/(v[\d.]+)\/schema\.json$/i;
+
+/** Derive a short display name (+ version, if present) from an extension URI. */
+export function parseExtension(uri: string): ParsedExtension {
+  const match = uri.match(EXTENSION_URI_RE);
+  if (match) return {uri, name: match[1], version: match[2]};
+  // Pre-1.0/non-standard extension identifiers: fall back to the last path
+  // segment (or the raw string for a bare short id like the legacy "eo").
+  const lastSegment = uri.split('/').filter(Boolean).pop();
+  return {uri, name: lastSegment || uri};
+}
+
+/**
+ * Renders a node's `stac_extensions` as a row of linked badges — each links
+ * out to its schema URI (opened in a new tab), mirroring how STAC Browser
+ * surfaces extension usage on Collection/Item pages.
+ */
+export function ExtensionsList({
+  extensions,
+}: {
+  extensions?: string[];
+}): React.JSX.Element | null {
+  if (!extensions || extensions.length === 0) return null;
+  return (
+    <div className="stac-extensions">
+      <h2 className="stac-section-title">
+        <Translate id="stac.extensions.title">Extensions</Translate>
+      </h2>
+      <ul className="stac-extensions__list">
+        {extensions.map((uri) => {
+          const {name, version} = parseExtension(uri);
+          return (
+            <li key={uri} className="stac-extensions__item">
+              <a
+                href={uri}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="stac-badge stac-badge--extension"
+                title={uri}
+              >
+                {name}
+                {version && (
+                  <span className="stac-extensions__version">{version}</span>
+                )}
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 

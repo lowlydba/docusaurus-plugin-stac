@@ -36,6 +36,7 @@
   --stac-badge-catalog: #64748b;
   --stac-badge-collection: #2563eb;
   --stac-badge-item: #0f766e;
+  --stac-badge-extension: #7c3aed;
 }
 .stac-page {
   max-width: 960px;
@@ -334,6 +335,31 @@
 }
 .stac-badge--item {
   background: var(--stac-badge-item);
+}
+.stac-badge--extension {
+  background: var(--stac-badge-extension);
+  cursor: pointer;
+}
+
+/* Extensions — a row of linked badges, each opening the extension's schema
+ * URI in a new tab. Version (when parsed from the URI) is appended as a
+ * lighter, monospace suffix inside the same badge. */
+.stac-extensions__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--stac-gap-xs);
+}
+.stac-extensions {
+  margin-top: var(--stac-gap-lg);
+}
+.stac-extensions__version {
+  margin-left: 0.35rem;
+  font-family: var(--ifm-font-family-monospace);
+  font-weight: 500;
+  opacity: 0.85;
 }
 
 /* Latest-alias tag — a Docker-style `:latest` suffix appended directly after

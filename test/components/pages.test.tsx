@@ -135,6 +135,24 @@ describe('StacCatalog', () => {
     expect(img).not.toBeNull();
     expect(img).toHaveAttribute('src', 'https://example.test/catalog-thumb.png');
   });
+
+  it('renders extension badges when the catalog declares stac_extensions', () => {
+    const node = baseNode({
+      type: 'Catalog',
+      routePath: '/stac',
+      title: 'Root Catalog',
+      stac: {
+        id: 'root',
+        links: [],
+        stac_extensions: ['https://stac-extensions.github.io/eo/v1.1.0/schema.json'],
+      } as StacNode['stac'],
+    });
+    render(<StacCatalog data={pageData(node)} />);
+    expect(screen.getByRole('link', {name: /eo/})).toHaveAttribute(
+      'href',
+      'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+    );
+  });
 });
 
 describe('StacCollection', () => {
@@ -189,6 +207,37 @@ describe('StacCollection', () => {
     expect(screen.getByText('Acme')).toBeInTheDocument();
     expect(screen.getByText('Items (1)')).toBeInTheDocument();
     expect(screen.getByText('Item 1')).toBeInTheDocument();
+    // Map disabled → text footprint fallback, resolved from extent.spatial.bbox.
+    expect(screen.getByText('Bounding box')).toBeInTheDocument();
+  });
+
+  it('renders no map section when the collection has no spatial extent', () => {
+    const node = baseNode({
+      type: 'Collection',
+      routePath: '/stac/coll',
+      title: 'No Extent',
+      stac: {id: 'coll', links: []} as StacNode['stac'],
+    });
+    const {container} = render(<StacCollection data={pageData(node)} />);
+    expect(container.querySelector('.stac-map-section')).toBeNull();
+  });
+
+  it('renders extension badges when the collection declares stac_extensions', () => {
+    const node = baseNode({
+      type: 'Collection',
+      routePath: '/stac/coll',
+      title: 'Extended',
+      stac: {
+        id: 'coll',
+        links: [],
+        stac_extensions: ['https://stac-extensions.github.io/eo/v1.1.0/schema.json'],
+      } as StacNode['stac'],
+    });
+    render(<StacCollection data={pageData(node)} />);
+    expect(screen.getByRole('link', {name: /eo/})).toHaveAttribute(
+      'href',
+      'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+    );
   });
 
   it('renders clear wording for open-ended and unspecified temporal extents', () => {
@@ -315,6 +364,25 @@ describe('StacItem', () => {
     expect(img).not.toBeNull();
     expect(img).toHaveAttribute('src', 'https://example.test/item-thumb.jpg');
     expect(img).toHaveAttribute('alt', 'Thumbed item');
+  });
+
+  it('renders extension badges when the item declares stac_extensions', () => {
+    const node = baseNode({
+      type: 'Item',
+      routePath: '/stac/item',
+      title: 'Extended item',
+      stac: {
+        id: 'item',
+        links: [],
+        assets: {},
+        stac_extensions: ['https://stac-extensions.github.io/eo/v1.1.0/schema.json'],
+      } as StacNode['stac'],
+    });
+    render(<StacItem data={pageData(node)} />);
+    expect(screen.getByRole('link', {name: /eo/})).toHaveAttribute(
+      'href',
+      'https://stac-extensions.github.io/eo/v1.1.0/schema.json',
+    );
   });
 
   it('handles an item with no properties or parent', () => {
