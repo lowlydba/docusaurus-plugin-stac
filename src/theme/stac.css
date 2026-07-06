@@ -340,10 +340,22 @@
   background: var(--stac-badge-extension);
   cursor: pointer;
 }
+/* Only the extension badge is a real link (type badges are plain <span>s), so
+ * it's the one that picks up the theme's global `a:hover` color — which is
+ * more specific than `.stac-badge`'s base `color: #fff` and reads poorly
+ * against the pill's own background. Pin it back to white on hover/focus. */
+a.stac-badge:hover,
+a.stac-badge:focus-visible {
+  color: #fff;
+  text-decoration: none;
+  filter: brightness(1.12);
+}
 
 /* Extensions — a row of linked badges, each opening the extension's schema
  * URI in a new tab. Version (when parsed from the URI) is appended as a
- * lighter, monospace suffix inside the same badge. */
+ * lighter, monospace suffix inside the same badge. A generic "puzzle piece"
+ * icon precedes the title so the badge reads as "extension" at a glance even
+ * when the name is an unrecognized raw slug. */
 .stac-extensions__list {
   list-style: none;
   padding: 0;
@@ -354,6 +366,12 @@
 }
 .stac-extensions {
   margin-top: var(--stac-gap-lg);
+}
+.stac-extensions__icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  margin-right: 0.3rem;
+  flex-shrink: 0;
 }
 .stac-extensions__version {
   margin-left: 0.35rem;
